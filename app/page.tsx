@@ -1,391 +1,368 @@
-"use client";
+"use client"
 
-import { useState, useRef, useEffect, KeyboardEvent, FormEvent } from "react";
-import { Send, Loader2, RotateCcw, Database, MessageSquare } from "lucide-react";
+import Link from "next/link"
+import { useMemo, useState } from "react"
+import {
+  ArrowRight,
+  AudioLines,
+  Mic,
+  Music4,
+  Sparkles,
+  Waves,
+} from "lucide-react"
 
-const apiBaseUrl =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
+const songOptions = [
+  {
+    id: "spring-day",
+    title: "봄날",
+    artist: "BTS",
+    bpm: 106,
+    key: "E Major",
+  },
+  {
+    id: "through-the-night",
+    title: "밤편지",
+    artist: "IU",
+    bpm: 79,
+    key: "C Major",
+  },
+  {
+    id: "defying-gravity",
+    title: "Defying Gravity",
+    artist: "Wicked",
+    bpm: 84,
+    key: "F Major",
+  },
+]
 
-interface Message {
-  role: "user" | "assistant";
-  text: string;
-  ts: string;
-  confidence?: number;
-  sources?: string[];
-}
+const feedbackSamples = [
+  {
+    title: "음정 정확도 분석",
+    description:
+      "구간별 피치 안정성을 추적해 흔들리는 음, 밀리는 음, 지나치게 높은 음을 잡아냅니다.",
+  },
+  {
+    title: "박자 정밀도 분석",
+    description:
+      "원곡 BPM과 사용자의 발성을 비교해 박자가 빨라지는 구간과 늦어지는 구간을 알려줍니다.",
+  },
+  {
+    title: "AI 코칭 피드백",
+    description:
+      "호흡, 발성, 강세, 프레이징을 함께 분석해 다음 연습 포인트를 자연어로 제안합니다.",
+  },
+]
 
-interface SampleDataItem {
-  [key: string]: string | number | boolean | null;
-}
+const journeySteps = [
+  {
+    label: "01",
+    title: "노래 선택",
+    description:
+      "부르고 싶은 곡을 고르면 AI가 원곡의 BPM, 키, 주요 멜로디 구간을 준비합니다.",
+    icon: Music4,
+  },
+  {
+    label: "02",
+    title: "마이크로 부르기",
+    description:
+      "내장 마이크로 노래를 부르면 실시간으로 음정과 박자 흐름이 기록됩니다.",
+    icon: Mic,
+  },
+  {
+    label: "03",
+    title: "분석 결과 확인",
+    description:
+      "정확도 점수와 함께 어떤 부분을 어떻게 연습해야 하는지 피드백을 받습니다.",
+    icon: Sparkles,
+  },
+]
 
-type ViewType = "qa" | "sample";
+export default function HomePage() {
+  const [selectedSongId, setSelectedSongId] = useState(songOptions[0].id)
 
-export default function TitanicQaApp() {
-  const [view, setView] = useState<ViewType>("qa");
-
-  return (
-    <main className="min-h-screen bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
-      <div className="max-w-lg mx-auto px-4 py-6">
-        {/* View Toggle */}
-        <nav className="flex gap-2 mb-6" role="tablist">
-          <button
-            role="tab"
-            aria-selected={view === "qa"}
-            aria-label="QA 채팅 보기"
-            onClick={() => setView("qa")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
-              view === "qa"
-                ? "border-zinc-400 dark:border-zinc-500 bg-zinc-100 dark:bg-zinc-800"
-                : "border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800"
-            }`}
-          >
-            <MessageSquare size={18} aria-hidden="true" />
-            <span>QA 채팅</span>
-          </button>
-          <button
-            role="tab"
-            aria-selected={view === "sample"}
-            aria-label="샘플 데이터 보기"
-            onClick={() => setView("sample")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
-              view === "sample"
-                ? "border-zinc-400 dark:border-zinc-500 bg-zinc-100 dark:bg-zinc-800"
-                : "border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800"
-            }`}
-          >
-            <Database size={18} aria-hidden="true" />
-            <span>샘플 데이터</span>
-          </button>
-        </nav>
-
-        {view === "qa" ? <TitanicQAPage /> : <TitanicSampleDataPage />}
-      </div>
-    </main>
-  );
-}
-
-function TitanicQAPage() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [lastQuestion, setLastQuestion] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const sendQuestion = async (question: string) => {
-    if (!question.trim()) return;
-
-    const userMessage: Message = {
-      role: "user",
-      text: question,
-      ts: new Date().toISOString(),
-    };
-    setMessages((prev) => [...prev, userMessage]);
-    setLastQuestion(question);
-    setInput("");
-    setIsLoading(true);
-    setErrorMessage(null);
-
-    try {
-      const response = await fetch(`${apiBaseUrl}/titanic/qa`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`서버 오류: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const { answer, confidence, sources } = data;
-
-      const assistantMessage: Message = {
-        role: "assistant",
-        text: answer,
-        ts: new Date().toISOString(),
-        confidence,
-        sources,
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.";
-      setErrorMessage(message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    sendQuestion(input);
-  };
-
-  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendQuestion(input);
-    }
-  };
-
-  const handleRetry = () => {
-    if (lastQuestion) {
-      setErrorMessage(null);
-      sendQuestion(lastQuestion);
-    }
-  };
+  const selectedSong = useMemo(
+    () => songOptions.find((song) => song.id === selectedSongId) ?? songOptions[0],
+    [selectedSongId]
+  )
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)]">
-      {/* Header */}
-      <header className="mb-4">
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-          Titanic QA Assistant
-        </h1>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          타이타닉 데이터 기반 질의응답
-        </p>
-      </header>
-
-      {/* Chat Messages */}
-      <div
-        className="flex-1 overflow-y-auto space-y-4 pb-4"
-        role="log"
-        aria-live="polite"
-        aria-label="채팅 메시지"
-      >
-        {messages.length === 0 && (
-          <div className="text-center text-zinc-500 dark:text-zinc-400 py-12">
-            <p>질문을 입력해 주세요.</p>
-            <p className="text-sm mt-2">예: 25세 남성 3등석 생존 가능성은?</p>
-          </div>
-        )}
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-          >
-            <div
-              className={`max-w-[85%] px-4 py-3 rounded-2xl ${
-                msg.role === "user"
-                  ? "bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900"
-                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700"
-              }`}
+    <main className="min-h-[calc(100vh-4rem)] bg-white text-zinc-950">
+      <section className="border-b border-zinc-200">
+        <div className="mx-auto flex max-w-6xl flex-col gap-12 px-4 py-14 md:flex-row md:items-center md:justify-between md:py-20">
+          <div className="max-w-[34rem]">
+            <h1
+              className="text-4xl font-semibold leading-[1.05] tracking-tight text-zinc-950 sm:text-5xl md:text-6xl"
             >
-              <p className="whitespace-pre-wrap break-words">{msg.text}</p>
-              {msg.role === "assistant" && (
-                <div className="mt-2 pt-2 border-t border-zinc-200 dark:border-zinc-700 text-sm text-zinc-600 dark:text-zinc-400">
-                  {msg.confidence !== undefined && (
-                    <p>
-                      <span className="font-medium">신뢰도:</span>{" "}
-                      {(msg.confidence * 100).toFixed(1)}%
-                    </p>
-                  )}
-                  {msg.sources && msg.sources.length > 0 && (
-                    <p className="mt-1">
-                      <span className="font-medium">출처:</span>{" "}
-                      {msg.sources.join(", ")}
-                    </p>
-                  )}
-                </div>
-              )}
-              <time
-                className={`block text-xs mt-1 ${
-                  msg.role === "user"
-                    ? "text-zinc-300 dark:text-zinc-600"
-                    : "text-zinc-500 dark:text-zinc-500"
-                }`}
-                dateTime={msg.ts}
+              노래를 고르고,
+              <br />
+              부르면서 AI로
+              <br />
+              음정과 박자를 분석하세요.
+            </h1>
+            <p className="mt-6 max-w-lg text-base leading-8 text-zinc-600 sm:text-lg">
+              사용자가 선택한 가요나 뮤지컬 넘버를 AI가 분석하고,
+              <br className="hidden sm:block" />
+              내장 마이크로 부른 결과를 바탕으로 음정과 박자 정확도,
+              <br className="hidden sm:block" />
+              그리고 다음 연습을 위한 코칭 피드백까지 제공합니다.
+              <br className="hidden sm:block" />
+              추후에는 기타와 피아노 같은 악기 튜닝 기능까지
+              <br className="hidden sm:block" />
+              하나의 서비스로 확장될 수 있도록 설계된 홈 화면입니다.
+            </p>
+
+            <div className="mt-10 grid gap-4 sm:grid-cols-2">
+              <Link
+                href="/analyze"
+                className="group rounded-2xl border border-zinc-200 bg-zinc-50 p-5 shadow-sm transition-colors hover:bg-zinc-100"
               >
-                {new Date(msg.ts).toLocaleTimeString("ko-KR", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </time>
+                <div className="flex items-center gap-2 text-sm font-medium text-zinc-700">
+                  <AudioLines className="h-4 w-4" aria-hidden="true" />
+                  보컬 배너
+                </div>
+                <h3 className="mt-3 text-2xl font-semibold text-zinc-950">
+                  가요 + 뮤지컬
+                </h3>
+                <p className="mt-3 max-w-sm text-sm leading-7 text-zinc-600 sm:text-base">
+                  사용자가 선택한 가요와 뮤지컬 넘버를 기반으로
+                  <br className="hidden sm:block" />
+                  음정, 박자, 발성 안정성을 분석하고
+                  <br className="hidden sm:block" />
+                  AI 피드백까지 받을 수 있습니다.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2 text-xs text-zinc-600">
+                  <span className="rounded-full border border-zinc-200 bg-white px-3 py-1">
+                    K-Pop Analysis
+                  </span>
+                  <span className="rounded-full border border-zinc-200 bg-white px-3 py-1">
+                    Musical Number
+                  </span>
+                  <span className="rounded-full border border-zinc-200 bg-white px-3 py-1">
+                    Vocal Feedback
+                  </span>
+                </div>
+                <div className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-zinc-900">
+                  보컬 상세 보기
+                  <ArrowRight
+                    className="h-4 w-4 transition-transform group-hover:translate-x-1"
+                    aria-hidden="true"
+                  />
+                </div>
+              </Link>
+
+              <Link
+                href="/instrument"
+                className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition-colors hover:bg-zinc-50"
+              >
+                <div className="flex items-center gap-2 text-sm font-medium text-zinc-700">
+                  <Music4 className="h-4 w-4" aria-hidden="true" />
+                  악기 배너
+                </div>
+                <h3 className="mt-3 text-2xl font-semibold text-zinc-950">
+                  기타 + 피아노
+                </h3>
+                <p className="mt-3 max-w-sm text-sm leading-7 text-zinc-600 sm:text-base">
+                  보컬 분석뿐 아니라 기타와 피아노 같은 악기의
+                  <br className="hidden sm:block" />
+                  음정 상태와 튜닝 정확도도 확인할 수 있도록
+                  <br className="hidden sm:block" />
+                  서비스가 확장될 예정입니다.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2 text-xs text-zinc-600">
+                  <span className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1">
+                    Guitar Tuning
+                  </span>
+                  <span className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1">
+                    Piano Pitch Check
+                  </span>
+                  <span className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1">
+                    Instrument Support
+                  </span>
+                </div>
+                <div className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-zinc-900">
+                  악기 상세 보기
+                  <ArrowRight
+                    className="h-4 w-4 transition-transform group-hover:translate-x-1"
+                    aria-hidden="true"
+                  />
+                </div>
+              </Link>
             </div>
           </div>
-        ))}
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-4 py-3 rounded-2xl flex items-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                응답 생성 중...
-              </span>
+
+          <div className="w-full max-w-xl rounded-3xl border border-zinc-200 bg-zinc-950 p-6 text-white shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-zinc-400">선택된 곡</p>
+                <h2 className="mt-1 text-2xl font-semibold">{selectedSong.title}</h2>
+                <p className="mt-1 text-sm text-zinc-400">{selectedSong.artist}</p>
+              </div>
+              <div className="rounded-full border border-zinc-700 px-3 py-1 text-xs text-zinc-300">
+                준비 완료
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              {songOptions.map((song) => (
+                <button
+                  key={song.id}
+                  type="button"
+                  onClick={() => setSelectedSongId(song.id)}
+                  className={`rounded-2xl border px-4 py-4 text-left transition-colors ${
+                    selectedSongId === song.id
+                      ? "border-white bg-white text-zinc-950"
+                      : "border-zinc-800 bg-zinc-900 text-white hover:border-zinc-600"
+                  }`}
+                >
+                  <p className="text-sm font-medium">{song.title}</p>
+                  <p
+                    className={`mt-1 text-xs ${
+                      selectedSongId === song.id ? "text-zinc-500" : "text-zinc-400"
+                    }`}
+                  >
+                    {song.artist}
+                  </p>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-6 grid gap-4 rounded-2xl border border-zinc-800 bg-black/30 p-5 sm:grid-cols-2">
+              <div>
+                <p className="text-sm text-zinc-400">곡 정보</p>
+                <div className="mt-3 space-y-2 text-sm text-zinc-200">
+                  <p>BPM {selectedSong.bpm}</p>
+                  <p>Key {selectedSong.key}</p>
+                  <p>보컬 분석 준비 상태 완료</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-zinc-400">예상 분석 항목</p>
+                <div className="mt-3 space-y-3">
+                  <AnalysisBar label="음정 정합도" value="92%" />
+                  <AnalysisBar label="박자 정합도" value="88%" />
+                  <AnalysisBar label="발성 안정성" value="85%" />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
+              <div className="flex items-center gap-2 text-sm text-zinc-400">
+                <Waves className="h-4 w-4" aria-hidden="true" />
+                AI 분석 흐름
+              </div>
+              <p className="mt-3 text-sm leading-6 text-zinc-300">
+                선택한 가요 또는 뮤지컬 넘버의 멜로디와 BPM을 먼저 분석하고, 사용자의 마이크
+                입력을 기준으로 음정 이탈 구간과 박자 오차 구간을 비교합니다. 이후 피드백
+                엔진이 연습할 구간을 우선순위로 정리합니다.
+              </p>
             </div>
           </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Error Message */}
-      {errorMessage && (
-        <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 flex items-center justify-between gap-2">
-          <span className="text-sm">{errorMessage}</span>
-          <button
-            type="button"
-            onClick={handleRetry}
-            aria-label="재시도"
-            className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg border border-red-300 dark:border-red-700 bg-white dark:bg-transparent hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-          >
-            <RotateCcw size={14} aria-hidden="true" />
-            <span>재시도</span>
-          </button>
         </div>
-      )}
+      </section>
 
-      {/* Input Form */}
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <div className="flex-1 relative">
-          <label htmlFor="question-input" className="sr-only">
-            질문 입력
-          </label>
-          <textarea
-            id="question-input"
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="예: 25세 남성 3등석 생존 가능성은?"
-            maxLength={500}
-            rows={1}
-            disabled={isLoading}
-            className="w-full px-4 py-3 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 resize-none focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          />
-          <span className="absolute right-3 bottom-1 text-xs text-zinc-400 dark:text-zinc-500">
-            {input.length}/500
-          </span>
+      <section className="mx-auto max-w-6xl px-4 py-14">
+        <div className="max-w-2xl">
+          <p className="text-sm font-medium text-zinc-500">서비스 흐름</p>
+          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">
+            사용자의 가요와 뮤지컬 넘버를 분석하는 과정을
+            <br />
+            가장 직관적인 화면으로 구성합니다.
+          </h2>
         </div>
-        <button
-          type="submit"
-          disabled={isLoading || !input.trim()}
-          aria-label="질문 전송"
-          className="px-4 py-3 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {isLoading ? (
-            <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
-          ) : (
-            <Send className="w-5 h-5" aria-hidden="true" />
-          )}
-        </button>
-      </form>
-    </div>
-  );
+
+        <div className="mt-8 grid gap-5 lg:grid-cols-3">
+          {journeySteps.map((step) => {
+            const Icon = step.icon
+            return (
+              <article
+                key={step.label}
+                className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold tracking-[0.2em] text-zinc-400">
+                    STEP {step.label}
+                  </span>
+                  <Icon className="h-5 w-5 text-zinc-900" aria-hidden="true" />
+                </div>
+                <h3 className="mt-6 text-xl font-semibold text-zinc-950">
+                  {step.title}
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-zinc-600">{step.description}</p>
+              </article>
+            )
+          })}
+        </div>
+      </section>
+
+      <section className="border-y border-zinc-200 bg-zinc-50">
+        <div className="mx-auto max-w-6xl px-4 py-14">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="max-w-2xl">
+              <p className="text-sm font-medium text-zinc-500">AI가 제공할 분석</p>
+              <h2 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">
+                단순 점수만이 아니라, 왜 흔들렸는지까지 설명하는 보컬 피드백
+              </h2>
+            </div>
+            <div className="rounded-full border border-zinc-300 px-4 py-2 text-sm text-zinc-600">
+              백엔드 연동 예정 기능
+            </div>
+          </div>
+
+          <div className="mt-8 grid gap-5 md:grid-cols-3">
+            {feedbackSamples.map((item) => (
+              <article
+                key={item.title}
+                className="rounded-3xl border border-zinc-200 bg-white p-6"
+              >
+                <AudioLines className="h-5 w-5 text-zinc-900" aria-hidden="true" />
+                <h3 className="mt-5 text-xl font-semibold text-zinc-950">
+                  {item.title}
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-zinc-600">{item.description}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-14">
+        <div className="rounded-[2rem] bg-zinc-950 px-6 py-10 text-white sm:px-10">
+          <p className="text-sm font-medium text-zinc-400">다음 단계</p>
+          <div className="mt-3 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl">
+              <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                선택한 노래, 사용자 음성, 분석 결과가 하나의 경험으로 이어지는 홈 화면
+              </h2>
+              <p className="mt-4 text-sm leading-7 text-zinc-300 sm:text-base">
+                추후 백엔드가 연결되면 가요와 뮤지컬 넘버를 아우르는 곡 선택 API, 마이크 입력
+                업로드, 음정/박자 정확도 분석, 그리고 자연어 피드백 결과를 이 홈 화면에서 바로
+                보여줄 수 있도록 설계했습니다.
+              </p>
+            </div>
+            <Link
+              href="/analyze"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-medium text-zinc-950 transition-colors hover:bg-zinc-100"
+            >
+              기능 시나리오 확인
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
+        </div>
+      </section>
+    </main>
+  )
 }
 
-function TitanicSampleDataPage() {
-  const [data, setData] = useState<SampleDataItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const fetchData = async () => {
-    setIsLoading(true);
-    setErrorMessage(null);
-    try {
-      const response = await fetch(`${apiBaseUrl}/titanic/data`);
-      if (!response.ok) {
-        throw new Error(`서버 오류: ${response.status}`);
-      }
-      const result = await response.json();
-      setData(result);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "데이터를 불러올 수 없습니다.";
-      setErrorMessage(message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const formatValue = (value: string | number | boolean | null): string => {
-    if (value === null || value === undefined) return "-";
-    if (typeof value === "boolean") return value ? "예" : "아니오";
-    return String(value);
-  };
-
+function AnalysisBar({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      {/* Header */}
-      <header className="mb-4">
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-          샘플 데이터
-        </h1>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          타이타닉 승객 데이터 목록
-        </p>
-      </header>
-
-      {/* Loading State */}
-      {isLoading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-zinc-500" aria-hidden="true" />
-          <span className="ml-2 text-zinc-600 dark:text-zinc-400">
-            데이터 로딩 중...
-          </span>
-        </div>
-      )}
-
-      {/* Error State */}
-      {errorMessage && !isLoading && (
-        <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 flex items-center justify-between gap-2">
-          <span>{errorMessage}</span>
-          <button
-            type="button"
-            onClick={fetchData}
-            aria-label="다시 불러오기"
-            className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg border border-red-300 dark:border-red-700 bg-white dark:bg-transparent hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-          >
-            <RotateCcw size={14} aria-hidden="true" />
-            <span>다시 불러오기</span>
-          </button>
-        </div>
-      )}
-
-      {/* Data Cards */}
-      {!isLoading && !errorMessage && (
-        <div className="space-y-4">
-          {data.length === 0 ? (
-            <p className="text-center text-zinc-500 dark:text-zinc-400 py-12">
-              데이터가 없습니다.
-            </p>
-          ) : (
-            data.map((item, idx) => (
-              <article
-                key={idx}
-                className="p-4 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800"
-              >
-                <h2 className="sr-only">승객 {idx + 1}</h2>
-                <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                  {Object.entries(item).map(([key, value]) => (
-                    <div key={key} className="flex flex-col">
-                      <dt className="font-medium text-zinc-500 dark:text-zinc-400">
-                        {key}
-                      </dt>
-                      <dd className="text-zinc-900 dark:text-zinc-100">
-                        {formatValue(value)}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              </article>
-            ))
-          )}
-        </div>
-      )}
+      <div className="mb-1 flex items-center justify-between text-xs text-zinc-400">
+        <span>{label}</span>
+        <span>{value}</span>
+      </div>
+      <div className="h-2 rounded-full bg-zinc-800">
+        <div className="h-2 rounded-full bg-white" style={{ width: value }} />
+      </div>
     </div>
-  );
+  )
 }
