@@ -1,0 +1,203 @@
+"use client"
+
+import { useEffect, useRef, useState } from "react"
+import { EyeOff, LayoutGrid, Mic, Plus } from "lucide-react"
+
+type ChatMessage = { id: string; role: "user" | "assistant"; content: string }
+
+export function GeminiChat() {
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [input, setInput] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [modelTier, setModelTier] = useState<"fast" | "pro">("fast")
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" })
+  }, [messages, loading])
+
+  async function send() {
+    const trimmed = input.trim()
+    if (!trimmed || loading) return
+
+    setError(null)
+    const userMsg: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content: trimmed,
+    }
+    const nextMessages = [...messages, userMsg]
+    setMessages(nextMessages)
+    setInput("")
+    setLoading(true)
+
+    try {
+      const res = await fetch("/api/gemini/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: trimmed }),
+      })
+      const data = (await res.json()) as { reply?: string; error?: string }
+      if (!res.ok) {
+        throw new Error(data.error ?? "요청에 실패했습니다.")
+      }
+      const reply = data.reply?.trim()
+      if (!reply) {
+        throw new Error("응답 본문이 비어 있습니다.")
+      }
+      setMessages((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), role: "assistant", content: reply },
+      ])
+    } catch (e) {
+      const raw = e instanceof Error ? e.message : "알 수 없는 오류"
+      const lower = raw.toLowerCase()
+      const friendly =
+        raw.includes("429") || lower.includes("quota") || lower.includes("할당량")
+          ? "Gemini API 할당량을 초과했습니다. Google AI Studio 사용량을 확인하거나 잠시 후 다시 시도해 주세요."
+          : raw.length > 320
+            ? raw.slice(0, 320) + "…"
+            : raw
+      setError(friendly)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const hasThread = messages.length > 0 || loading
+
+  return (
+    <div className="font-sans antialiased w-full max-w-4xl">
+      <div className="max-w-2xl">
+        <p className="text-sm font-medium text-zinc-500">Gemini</p>
+        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl">
+          가요·뮤지컬 연습, 음정·박자 질문을 Gemini와 나눠 보세요.
+        </h2>
+      </div>
+
+      <div className="mt-6 overflow-hidden rounded-2xl border border-zinc-700/60 bg-[#1e1e1e]">
+        {hasThread && (
+          <div
+            ref={scrollRef}
+            className="min-h-48 max-h-80 space-y-2 overflow-y-auto border-b border-zinc-700/50 px-4 py-3 text-sm sm:max-h-96"
+          >
+            {messages.map((m) => (
+              <div
+                key={m.id}
+                className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <p
+                  className={`max-w-[92%] rounded-lg px-3 py-2 leading-relaxed ${
+                    m.role === "user"
+                      ? "bg-zinc-800 text-zinc-100"
+                      : "bg-zinc-800/60 text-zinc-300"
+                  }`}
+                >
+                  {m.content}
+                </p>
+              </div>
+            ))}
+            {loading && (
+              <p className="text-zinc-500">응답 작성 중…</p>
+            )}
+          </div>
+        )}
+
+        <label htmlFor="gemini-input" className="sr-only">
+          프롬프트 입력
+        </label>
+        <textarea
+          id="gemini-input"
+          rows={4}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault()
+              void send()
+            }
+          }}
+          placeholder="프롬프트를 입력해 Gemini가 할 수 있는 일을 확인해 보세요."
+          className="w-full resize-none border-0 bg-transparent px-4 pt-4 pb-2 text-[15px] leading-relaxed text-zinc-100 placeholder:text-zinc-500 outline-none ring-0 focus:ring-0"
+          disabled={loading}
+        />
+
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3 pb-3 pt-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-700/80 bg-zinc-800/50 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-200"
+              aria-label="미리보기 끄기 (준비 중)"
+            >
+              <EyeOff className="h-4 w-4" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className="inline-flex h-9 items-center gap-2 rounded-full border border-zinc-700/80 bg-zinc-800/40 px-3 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-800"
+              aria-label="도구 (준비 중)"
+            >
+              <LayoutGrid className="h-3.5 w-3.5" aria-hidden="true" />
+              도구
+            </button>
+            <label className="sr-only" htmlFor="gemini-model">
+              모델
+            </label>
+            <select
+              id="gemini-model"
+              value={modelTier}
+              onChange={(e) => setModelTier(e.target.value as "fast" | "pro")}
+              className="h-9 cursor-pointer rounded-lg border border-zinc-700/80 bg-zinc-800/50 px-2.5 text-xs text-zinc-300 outline-none hover:bg-zinc-800"
+              disabled={loading}
+            >
+              <option value="fast">빠른 모델</option>
+              <option value="pro">고품질</option>
+            </select>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <button
+              type="button"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-700/80 bg-zinc-800/40 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-200"
+              aria-label="음성 입력 (준비 중)"
+            >
+              <Mic className="h-4 w-4" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-700/80 bg-zinc-800/40 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-200"
+              aria-label="추가 (준비 중)"
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => void send()}
+              disabled={loading || !input.trim()}
+              className="inline-flex items-center gap-2 rounded-full bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-35"
+            >
+              실행
+              <span className="hidden items-center gap-0.5 text-[11px] font-normal text-zinc-500 sm:inline-flex">
+                <kbd className="rounded border border-zinc-600 bg-zinc-900/80 px-1 py-px font-sans">
+                  Enter
+                </kbd>
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {error && (
+        <p className="mt-3 text-sm text-red-600" role="alert">
+          {error}
+        </p>
+      )}
+
+      <p className="mt-4 max-w-3xl text-xs leading-relaxed text-zinc-500">
+        Gemini는 AI이며 오류를 낼 수 있습니다. 민감한 개인 정보는 입력하지 마세요.
+      </p>
+    </div>
+  )
+}

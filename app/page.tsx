@@ -2,14 +2,8 @@
 
 import Link from "next/link"
 import { useMemo, useState } from "react"
-import {
-  ArrowRight,
-  AudioLines,
-  Mic,
-  Music4,
-  Sparkles,
-  Waves,
-} from "lucide-react"
+import { ArrowRight, AudioLines, Music4, Waves } from "lucide-react"
+import { GeminiChat } from "@/components/gemini-chat"
 
 const songOptions = [
   {
@@ -50,30 +44,6 @@ const feedbackSamples = [
     title: "AI 코칭 피드백",
     description:
       "호흡, 발성, 강세, 프레이징을 함께 분석해 다음 연습 포인트를 자연어로 제안합니다.",
-  },
-]
-
-const journeySteps = [
-  {
-    label: "01",
-    title: "노래 선택",
-    description:
-      "부르고 싶은 곡을 고르면 AI가 원곡의 BPM, 키, 주요 멜로디 구간을 준비합니다.",
-    icon: Music4,
-  },
-  {
-    label: "02",
-    title: "마이크로 부르기",
-    description:
-      "내장 마이크로 노래를 부르면 실시간으로 음정과 박자 흐름이 기록됩니다.",
-    icon: Mic,
-  },
-  {
-    label: "03",
-    title: "분석 결과 확인",
-    description:
-      "정확도 점수와 함께 어떤 부분을 어떻게 연습해야 하는지 피드백을 받습니다.",
-    icon: Sparkles,
   },
 ]
 
@@ -261,37 +231,7 @@ export default function HomePage() {
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-14">
-        <div className="max-w-2xl">
-          <p className="text-sm font-medium text-zinc-500">서비스 흐름</p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">
-            사용자의 가요와 뮤지컬 넘버를 분석하는 과정을
-            <br />
-            가장 직관적인 화면으로 구성합니다.
-          </h2>
-        </div>
-
-        <div className="mt-8 grid gap-5 lg:grid-cols-3">
-          {journeySteps.map((step) => {
-            const Icon = step.icon
-            return (
-              <article
-                key={step.label}
-                className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold tracking-[0.2em] text-zinc-400">
-                    STEP {step.label}
-                  </span>
-                  <Icon className="h-5 w-5 text-zinc-900" aria-hidden="true" />
-                </div>
-                <h3 className="mt-6 text-xl font-semibold text-zinc-950">
-                  {step.title}
-                </h3>
-                <p className="mt-3 text-sm leading-6 text-zinc-600">{step.description}</p>
-              </article>
-            )
-          })}
-        </div>
+        <GeminiChat />
       </section>
 
       <section className="border-y border-zinc-200 bg-zinc-50">

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import Link from 'next/link'
+import { WeatherWidget } from '@/components/weather-widget'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -51,7 +52,8 @@ export default function RootLayout({
                 오늘 새로운 나와 이음
               </span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <WeatherWidget variant="compact" />
               <Link
                 href="/titanic"
                 className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-50"
