@@ -1,24 +1,13 @@
 "use client"
 
 import Link from "next/link"
-import { useCallback, useEffect, useRef, useState } from "react"
-import { ChevronDown, ChevronRight, Loader2, MapPin, RefreshCw } from "lucide-react"
-import { WeatherDayIcon } from "@/components/weather-day-icon"
-import { useWeatherCity } from "@/hooks/use-weather-city"
+import { useCallback, useEffect, useState } from "react"
+import { ChevronRight, CloudSun, Loader2, MapPin, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
-import {
-  WEATHER_CITY_IDS,
-  WEATHER_CITY_LABELS,
-  type WeatherCityId,
-} from "@/lib/weather-cities"
 
-type CityWeather = {
-  id: WeatherCityId
-  name: string
-  name_ko: string
+type WeatherData = {
   temp: number
   description: string
-  icon: string | null
 }
 
 type WeatherWidgetProps = {
@@ -27,29 +16,26 @@ type WeatherWidgetProps = {
 
 export function WeatherWidget({ variant = "default" }: WeatherWidgetProps) {
   const compact = variant === "compact"
-  const { cityId, mode, locating, selectCity, useCurrentLocation } = useWeatherCity()
-  const [weather, setWeather] = useState<CityWeather | null>(null)
+  const [weather, setWeather] = useState<WeatherData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [pickerOpen, setPickerOpen] = useState(false)
-  const pickerRef = useRef<HTMLDivElement>(null)
 
-  const load = useCallback(async (targetCity: WeatherCityId) => {
+  const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/weather/current?city=${targetCity}`)
-      const data = (await res.json()) as CityWeather & { error?: string }
+      const res = await fetch("/api/weather")
+      const data = (await res.json()) as WeatherData & { error?: string }
       if (!res.ok) {
-        throw new Error(data.error ?? "??? ???? ?????.")
+        throw new Error(data.error ?? "날씨를 불러오지 못했습니다.")
       }
-      setWeather(data)
+      setWeather({ temp: data.temp, description: data.description })
     } catch (e) {
       setWeather(null)
-      const raw = e instanceof Error ? e.message : "? ? ?? ??"
+      const raw = e instanceof Error ? e.message : "알 수 없는 오류"
       const friendly =
         raw === "fetch failed" || raw.includes("Failed to fetch")
-          ? "?? ??? ???? ?????. ???(uvicorn) ?? ??? ??? ???."
+          ? "날씨 서버에 연결하지 못했습니다. 백엔드(uvicorn) 실행 여부를 확인해 주세요."
           : raw
       setError(friendly)
     } finally {
@@ -58,236 +44,144 @@ export function WeatherWidget({ variant = "default" }: WeatherWidgetProps) {
   }, [])
 
   useEffect(() => {
-    void load(cityId)
-  }, [cityId, load])
-
-  useEffect(() => {
-    if (!pickerOpen) return
-
-    const onPointerDown = (e: MouseEvent) => {
-      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
-        setPickerOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", onPointerDown)
-    return () => document.removeEventListener("mousedown", onPointerDown)
-  }, [pickerOpen])
-
-  const cityLabel = weather?.name_ko ?? WEATHER_CITY_LABELS[cityId]
-  const showLocating = locating && mode === "auto" && loading
-
-  const picker = (
-    <div
-      ref={pickerRef}
-      className={cn(
-        "absolute z-50 min-w-[9.5rem] overflow-hidden rounded-lg border py-1 shadow-lg",
-        compact
-          ? "right-0 top-full mt-1 border-zinc-700 bg-zinc-900"
-          : "left-0 top-full mt-1 w-full border-zinc-200 bg-white"
-      )}
-    >
-      {WEATHER_CITY_IDS.map((id) => (
-        <button
-          key={id}
-          type="button"
-          onClick={() => {
-            selectCity(id)
-            setPickerOpen(false)
-          }}
-          className={cn(
-            "flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors",
-            compact
-              ? cn(
-                  "hover:bg-zinc-800",
-                  cityId === id ? "text-white" : "text-zinc-300"
-                )
-              : cn(
-                  "hover:bg-zinc-50",
-                  cityId === id ? "text-zinc-900" : "text-zinc-600"
-                )
-          )}
-        >
-          {WEATHER_CITY_LABELS[id]}
-          {cityId === id && mode === "manual" && (
-            <span className={cn("text-[10px]", compact ? "text-zinc-500" : "text-zinc-400")}>
-              ??
-            </span>
-          )}
-        </button>
-      ))}
-      <button
-        type="button"
-        onClick={() => {
-          useCurrentLocation()
-          setPickerOpen(false)
-        }}
-        className={cn(
-          "flex w-full items-center gap-2 border-t px-3 py-2 text-left text-sm transition-colors",
-          compact
-            ? "border-zinc-700 text-sky-300 hover:bg-zinc-800"
-            : "border-zinc-200 text-sky-600 hover:bg-zinc-50"
-        )}
-      >
-        <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-        ?? ??
-      </button>
-    </div>
-  )
-
-  if (compact) {
-    return (
-      <div className="relative flex items-center gap-1" aria-label="??">
-        <div className="relative flex items-center rounded-lg border border-zinc-800 bg-zinc-950 text-white shadow-sm">
-          {showLocating && (
-            <span className="flex items-center gap-1.5 px-2.5 py-2 text-xs text-zinc-300">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-              ?? ???
-            </span>
-          )}
-
-          {!showLocating && loading && (
-            <span className="flex items-center gap-1.5 px-2.5 py-2 text-xs text-zinc-300">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-              ??
-            </span>
-          )}
-
-          {!showLocating && !loading && error && (
-            <span className="flex items-center gap-1 px-2 py-2 text-xs text-red-400">
-              ??
-              <button
-                type="button"
-                onClick={() => void load(cityId)}
-                className="rounded p-0.5 hover:bg-zinc-800"
-                aria-label="?? ??"
-              >
-                <RefreshCw className="h-3 w-3" aria-hidden="true" />
-              </button>
-            </span>
-          )}
-
-          {!showLocating && !loading && weather && (
-            <>
-              <Link
-                href={`/weather?city=${cityId}`}
-                className="flex min-w-0 items-center gap-1 px-2 py-1.5 transition-colors hover:bg-zinc-800 sm:gap-1.5 sm:pr-1"
-                title={`${cityLabel} 1?? ??`}
-              >
-                <WeatherDayIcon
-                  icon={weather.icon}
-                  description={weather.description}
-                  className="!h-7 !w-7 !text-base !ring-1"
-                />
-                <span className="max-w-[3.5rem] truncate text-[11px] font-medium text-zinc-300 sm:max-w-none sm:text-xs">
-                  {mode === "auto" ? (
-                    <>
-                      <span className="text-zinc-500">? ?? ? </span>
-                      {cityLabel}
-                    </>
-                  ) : (
-                    cityLabel
-                  )}
-                </span>
-                <span className="shrink-0 text-sm font-semibold tabular-nums">
-                  {weather.temp}?
-                </span>
-                <span className="hidden max-w-[4rem] truncate capitalize text-[11px] text-zinc-400 sm:inline sm:max-w-[5rem] sm:text-xs">
-                  {weather.description}
-                </span>
-              </Link>
-              <button
-                type="button"
-                onClick={() => setPickerOpen((o) => !o)}
-                className="shrink-0 rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white"
-                aria-expanded={pickerOpen}
-                aria-haspopup="listbox"
-                aria-label="?? ??"
-              >
-                <ChevronDown
-                  className={cn("h-3.5 w-3.5 transition-transform", pickerOpen && "rotate-180")}
-                  aria-hidden="true"
-                />
-              </button>
-              {pickerOpen && picker}
-            </>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={() => void load(cityId)}
-          className="shrink-0 rounded-lg border border-zinc-800 bg-zinc-950 p-1.5 text-zinc-400 transition-colors hover:bg-black hover:text-white"
-          aria-label="?? ????"
-        >
-          <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-        </button>
-      </div>
-    )
-  }
+    void load()
+  }, [load])
 
   return (
-    <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-zinc-900">??</h2>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setPickerOpen((o) => !o)}
-            className="rounded-lg px-2 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100"
-            aria-expanded={pickerOpen}
-          >
-            ?? ??
-            <ChevronDown className="ml-0.5 inline h-3.5 w-3.5" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={() => void load(cityId)}
-            className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
-            aria-label="?? ????"
-          >
-            <RefreshCw className="h-4 w-4" aria-hidden="true" />
-          </button>
-        </div>
-      </div>
-      {pickerOpen && picker}
-
-      {(showLocating || loading) && (
-        <div className="flex items-center justify-center gap-2 py-6 text-sm text-zinc-500">
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-          {showLocating ? "?? ?? ?? ??" : "?? ???? ??"}
-        </div>
+    <Link
+      href="/weather"
+      className={cn(
+        "group transition-colors",
+        compact
+          ? "inline-flex h-9 max-w-[11rem] items-center rounded-lg border border-zinc-800 bg-zinc-950 px-2 text-white shadow-sm hover:border-zinc-600 hover:bg-black sm:max-w-none sm:px-2.5"
+          : "block w-full max-w-md rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm hover:border-zinc-300 hover:bg-zinc-50/80"
+      )}
+      aria-label={"서울 날씨 — 1주일 예보 보기"}
+      title={compact ? "1주일 예보 보기" : undefined}
+    >
+      {loading && (
+        <span
+          className={cn(
+            "flex items-center",
+            compact
+              ? "justify-center gap-1.5 px-1 text-xs text-zinc-300"
+              : "justify-center gap-2 py-3 text-sm text-zinc-500"
+          )}
+        >
+          <Loader2
+            className={cn("animate-spin", compact ? "h-3.5 w-3.5" : "h-4 w-4")}
+            aria-hidden="true"
+          />
+          <span className={compact ? "sr-only sm:not-sr-only sm:inline" : undefined}>
+            {compact ? "로딩" : "날씨 불러오는 중…"}
+          </span>
+        </span>
       )}
 
-      {!showLocating && !loading && error && (
-        <div className="py-4 text-center text-sm text-red-600">{error}</div>
+      {!loading && error && (
+        <span
+          className={cn(
+            "flex items-center",
+            compact ? "gap-1 px-0.5 text-xs text-red-400" : "flex-col gap-2 py-2 text-center text-red-600"
+          )}
+        >
+          <span className={compact ? "truncate" : "text-sm"}>
+            {compact ? "날씨 오류" : error}
+          </span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              void load()
+            }}
+            className={cn(
+              "font-medium underline-offset-2 hover:underline",
+              compact
+                ? "shrink-0 rounded p-0.5 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                : "text-xs text-zinc-600"
+            )}
+            aria-label={"다시 시도"}
+          >
+            {compact ? (
+              <RefreshCw className="h-3 w-3" aria-hidden="true" />
+            ) : (
+              "다시 시도"
+            )}
+          </button>
+        </span>
       )}
 
-      {!showLocating && !loading && weather && (
-        <div className="space-y-3">
-          <Link
-            href={`/weather?city=${cityId}`}
-            className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-3 transition-colors hover:bg-zinc-100"
+      {!loading && weather && compact && (
+        <span className="flex min-w-0 items-center gap-1 sm:gap-1.5">
+          <MapPin className="hidden h-3 w-3 shrink-0 text-zinc-400 sm:block" aria-hidden="true" />
+          <span className="hidden shrink-0 text-[11px] font-medium text-zinc-300 sm:inline">
+            Seoul
+          </span>
+          <CloudSun className="h-3.5 w-3.5 shrink-0 text-amber-400" aria-hidden="true" />
+          <span className="shrink-0 text-sm font-semibold tabular-nums text-white">
+            {weather.temp}°
+          </span>
+          <span className="min-w-0 truncate text-[11px] capitalize text-zinc-300 sm:max-w-[5.5rem] sm:text-xs">
+            {weather.description}
+          </span>
+          <ChevronRight
+            className="hidden h-3 w-3 shrink-0 text-zinc-400 sm:block sm:opacity-70 sm:group-hover:text-white"
+            aria-hidden="true"
+          />
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              void load()
+            }}
+            className="ml-0.5 shrink-0 rounded p-0.5 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+            aria-label={"날씨 새로고침"}
           >
-            <WeatherDayIcon icon={weather.icon} description={weather.description} />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-zinc-900">
-                {mode === "auto" ? `? ?? ? ${cityLabel}` : cityLabel}
-              </p>
-              <p className="truncate text-xs capitalize text-zinc-600">{weather.description}</p>
-            </div>
-            <div className="flex items-center gap-1 text-zinc-900">
-              <span className="text-2xl font-semibold tabular-nums">{weather.temp}?</span>
-              <ChevronRight className="h-4 w-4 text-zinc-400" aria-hidden="true" />
-            </div>
-          </Link>
-          <Link
-            href={`/weather?city=${cityId}`}
-            className="flex items-center justify-center gap-1 text-xs font-medium text-zinc-500 hover:text-zinc-800"
-          >
-            1?? ?? ??
+            <RefreshCw className="h-3 w-3" aria-hidden="true" />
+          </button>
+        </span>
+      )}
+
+      {!loading && weather && !compact && (
+        <span className="flex flex-col gap-3">
+          <span className="flex items-center justify-between gap-3">
+            <span className="flex items-center gap-2 text-sm font-medium text-zinc-500">
+              <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>Seoul</span>
+            </span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                void load()
+              }}
+              className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
+              aria-label={"날씨 새로고침"}
+            >
+              <RefreshCw className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </span>
+
+          <span className="flex items-center justify-center gap-4 py-1">
+            <CloudSun className="h-12 w-12 text-amber-500" aria-hidden="true" />
+            <span className="text-center">
+              <span className="block text-4xl font-semibold tabular-nums tracking-tight text-zinc-950">
+                {weather.temp}°
+              </span>
+              <span className="mt-1 block text-sm capitalize text-zinc-600">
+                {weather.description}
+              </span>
+            </span>
+          </span>
+          <span className="flex items-center justify-center gap-1 text-xs font-medium text-zinc-500 group-hover:text-zinc-700">
+            1주일 예보 보기
             <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
-          </Link>
-        </div>
+          </span>
+        </span>
       )}
-    </div>
+    </Link>
   )
 }
