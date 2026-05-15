@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { useCallback, useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, Loader2, MapPin } from "lucide-react"
 import { WeatherDayIcon, getWeatherLabelClass } from "@/components/weather-day-icon"
 import { cn } from "@/lib/utils"
@@ -39,16 +39,18 @@ function formatDayLabel(dateStr: string, index: number) {
   }).format(date)
 }
 
-function CityForecastSection({ city }: { city: CityForecast }) {
+function CityForecastView({ city }: { city: CityForecast }) {
   return (
-    <section id={city.id} className="scroll-mt-24">
+    <section aria-labelledby={`weather-city-${city.id}`}>
       <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-zinc-200 bg-zinc-950 px-4 py-4 text-white sm:px-5">
         <WeatherDayIcon
           icon={city.current.icon}
           description={city.current.description}
         />
         <div className="min-w-0 flex-1">
-          <h2 className="text-xl font-semibold">{city.name_ko}</h2>
+          <h2 id={`weather-city-${city.id}`} className="text-xl font-semibold">
+            {city.name_ko}
+          </h2>
           <p className="text-sm text-zinc-400">{city.name}</p>
           <p className="mt-1 capitalize text-zinc-300">{city.current.description}</p>
         </div>
@@ -88,6 +90,7 @@ function CityForecastSection({ city }: { city: CityForecast }) {
 }
 
 export function WeatherDetailContent() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const cityParam = searchParams.get("city")
   const initialCity = cityParam && isWeatherCityId(cityParam) ? cityParam : "seoul"
@@ -125,14 +128,31 @@ export function WeatherDetailContent() {
   useEffect(() => {
     if (cityParam && isWeatherCityId(cityParam)) {
       setActiveCity(cityParam)
-      document.getElementById(cityParam)?.scrollIntoView({ behavior: "smooth", block: "start" })
     }
-  }, [cityParam, cities])
+  }, [cityParam])
 
-  const scrollToCity = (cityId: WeatherCityId) => {
-    setActiveCity(cityId)
-    document.getElementById(cityId)?.scrollIntoView({ behavior: "smooth", block: "start" })
-  }
+  const selectCity = useCallback(
+    (cityId: WeatherCityId) => {
+      setActiveCity(cityId)
+      router.replace(`/weather?city=${cityId}`, { scroll: false })
+    },
+    [router]
+  )
+
+  const activeForecast = useMemo(() => {
+    if (!cities.length) return null
+    return cities.find((c) => c.id === activeCity) ?? cities[0]
+  }, [cities, activeCity])
+
+  useEffect(() => {
+    if (!cities.length) return
+    const exists = cities.some((c) => c.id === activeCity)
+    if (!exists) {
+      const fallback = cities[0].id
+      setActiveCity(fallback)
+      router.replace(`/weather?city=${fallback}`, { scroll: false })
+    }
+  }, [cities, activeCity, router])
 
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-white text-zinc-950">
@@ -154,8 +174,8 @@ export function WeatherDetailContent() {
             1주일 날씨 예보
           </h1>
           <p className="mt-3 text-sm leading-7 text-zinc-600">
-            세계 주요 도시의 현재 날씨와 1주일 예보를 확인할 수 있습니다. API 제공 범위에
-            따라 5~7일이 표시될 수 있습니다.
+            상단에서 도시를 선택하면 현재 날씨와 1주일 예보가 바로 바뀝니다. API 제공
+            범위에 따라 5~7일이 표시될 수 있습니다.
           </p>
         </header>
 
@@ -165,7 +185,8 @@ export function WeatherDetailContent() {
               <button
                 key={city.id}
                 type="button"
-                onClick={() => scrollToCity(city.id)}
+                onClick={() => selectCity(city.id)}
+                aria-pressed={activeCity === city.id}
                 className={cn(
                   "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
                   activeCity === city.id
@@ -199,11 +220,9 @@ export function WeatherDetailContent() {
           </div>
         )}
 
-        {!loading && cities.length > 0 && (
-          <div className="mt-10 space-y-12">
-            {cities.map((city) => (
-              <CityForecastSection key={city.id} city={city} />
-            ))}
+        {!loading && activeForecast && (
+          <div className="mt-10" key={activeForecast.id}>
+            <CityForecastView city={activeForecast} />
           </div>
         )}
       </div>
