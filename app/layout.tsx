@@ -49,7 +49,7 @@ export default function RootLayout({
                 IUEM
               </Link>
               <span className="text-xs font-semibold tracking-[0.14em] text-zinc-500 sm:text-sm whitespace-nowrap">
-                오늘 새로운 나와 이음
+                오늘, 새로운 나와 이음
               </span>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">

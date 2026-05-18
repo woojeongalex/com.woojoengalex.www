@@ -1,9 +1,16 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowRight, LockKeyhole, UserPlus } from "lucide-react"
+import { ArrowRight, Check, LockKeyhole, UserPlus } from "lucide-react"
 
 type AuthMode = "login" | "signup"
+type SignupValues = {
+  username: string
+  nickname: string
+  password: string
+  passwordConfirm: string
+  email: string
+}
 
 export default function AuthPage() {
   const [mode, setMode] = useState<AuthMode>("login")
@@ -111,10 +118,17 @@ function SignupForm() {
   const [usernameStatus, setUsernameStatus] = useState<
     "idle" | "checking" | "available" | "taken" | "error"
   >("idle")
+  const [nickname, setNickname] = useState("")
+  const [nicknameStatus, setNicknameStatus] = useState<
+    "idle" | "checking" | "available" | "taken" | "error"
+  >("idle")
   const [password, setPassword] = useState("")
   const [passwordConfirm, setPasswordConfirm] = useState("")
+  const [email, setEmail] = useState("")
+  const [submittedValues, setSubmittedValues] = useState<SignupValues | null>(null)
 
   const passwordMismatch = passwordConfirm.length > 0 && password !== passwordConfirm
+  const passwordMatch = password.length > 0 && passwordConfirm.length > 0 && password === passwordConfirm
 
   const checkUsername = async () => {
     const trimmed = username.trim()
@@ -136,6 +150,61 @@ function SignupForm() {
     }
   }
 
+  const checkNickname = async () => {
+    const trimmed = nickname.trim()
+    if (!trimmed) {
+      setNicknameStatus("idle")
+      return
+    }
+
+    setNicknameStatus("checking")
+    try {
+      const res = await fetch(`/api/auth/check-nickname?nickname=${encodeURIComponent(trimmed)}`)
+      const data = (await res.json()) as { available?: boolean }
+      if (!res.ok) {
+        throw new Error("닉네임 중복 확인에 실패했습니다.")
+      }
+      setNicknameStatus(data.available ? "available" : "taken")
+    } catch {
+      setNicknameStatus("error")
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const values = {
+      username,
+      nickname,
+      password,
+      passwordConfirm,
+      email,
+    }
+
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: values.username,
+          nickname: values.nickname,
+          password: values.password,
+          password_confirm: values.passwordConfirm,
+          email: values.email,
+          role: "user",
+        }),
+      })
+      const data = (await res.json()) as { error?: string }
+
+      if (!res.ok) {
+        throw new Error(data.error ?? "회원가입 요청에 실패했습니다.")
+      }
+
+      setSubmittedValues(values)
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "회원가입 요청에 실패했습니다.")
+    }
+  }
+
   return (
     <div className="mt-8">
       <div className="flex items-center gap-3">
@@ -148,13 +217,14 @@ function SignupForm() {
         </div>
       </div>
 
-      <form className="mt-8 space-y-4">
+      <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
         <FieldWithAction
           label="아이디"
           type="text"
           placeholder="아이디를 입력하세요"
           actionLabel="중복 확인"
           value={username}
+          required
           onChange={(value) => {
             setUsername(value)
             setUsernameStatus("idle")
@@ -172,12 +242,36 @@ function SignupForm() {
                     : undefined
           }
         />
-        <Field label="닉네임" type="text" placeholder="닉네임을 입력하세요" />
+        <FieldWithAction
+          label="닉네임"
+          type="text"
+          placeholder="닉네임을 입력하세요"
+          actionLabel="중복 확인"
+          value={nickname}
+          required
+          onChange={(value) => {
+            setNickname(value)
+            setNicknameStatus("idle")
+          }}
+          onAction={checkNickname}
+          status={
+            nicknameStatus === "checking"
+              ? { text: "확인 중...", tone: "neutral" }
+              : nicknameStatus === "available"
+                ? { text: "사용가능", tone: "success" }
+                : nicknameStatus === "taken"
+                  ? { text: "불가능", tone: "error" }
+                  : nicknameStatus === "error"
+                    ? { text: "확인 실패", tone: "error" }
+                    : undefined
+          }
+        />
         <Field
           label="비밀번호"
           type="password"
           placeholder="비밀번호를 설정하세요"
           value={password}
+          required
           onChange={setPassword}
         />
         <Field
@@ -185,14 +279,24 @@ function SignupForm() {
           type="password"
           placeholder="비밀번호를 다시 입력하세요"
           value={passwordConfirm}
+          required
           onChange={setPasswordConfirm}
           status={
             passwordMismatch
               ? { text: "비밀번호가 다릅니다", tone: "error" }
+              : passwordMatch
+                ? { text: "일치", tone: "success", icon: "check" }
               : undefined
           }
         />
-        <Field label="이메일" type="email" placeholder="you@example.com" />
+        <Field
+          label="이메일"
+          type="email"
+          placeholder="you@example.com"
+          value={email}
+          required
+          onChange={setEmail}
+        />
 
         <button
           type="submit"
@@ -202,6 +306,60 @@ function SignupForm() {
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </button>
       </form>
+
+      {submittedValues && (
+        <SignupSummaryModal
+          values={submittedValues}
+          onClose={() => setSubmittedValues(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+function SignupSummaryModal({
+  values,
+  onClose,
+}: {
+  values: SignupValues
+  onClose: () => void
+}) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 px-4 backdrop-blur-sm">
+      <section className="w-full max-w-md rounded-[2rem] border border-zinc-200 bg-white p-6 text-zinc-950 shadow-[0_24px_80px_rgba(0,0,0,0.22)] sm:p-8">
+        <div className="flex items-center gap-3">
+          <div className="rounded-full bg-zinc-100 p-3">
+            <UserPlus className="h-5 w-5 text-zinc-900" aria-hidden="true" />
+          </div>
+          <div>
+            <p className="text-sm text-zinc-500">회원가입 정보</p>
+            <h2 className="text-2xl font-semibold">이대로 진행할까요?</h2>
+          </div>
+        </div>
+
+        <div className="mt-6 space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+          <SummaryRow label="아이디" value={values.username} />
+          <SummaryRow label="닉네임" value={values.nickname} />
+          <SummaryRow label="이메일" value={values.email} />
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-zinc-950 px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+        >
+          확인
+        </button>
+      </section>
+    </div>
+  )
+}
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-4 text-sm">
+      <span className="shrink-0 font-medium text-zinc-500">{label}</span>
+      <span className="break-all text-right font-semibold text-zinc-900">{value}</span>
     </div>
   )
 }
@@ -215,6 +373,7 @@ function FieldWithAction({
   onChange,
   onAction,
   status,
+  required,
 }: {
   label: string
   type: string
@@ -223,7 +382,8 @@ function FieldWithAction({
   value: string
   onChange: (value: string) => void
   onAction: () => void
-  status?: { text: string; tone: "success" | "error" | "neutral" }
+  status?: { text: string; tone: "success" | "error" | "neutral"; icon?: "check" }
+  required?: boolean
 }) {
   return (
     <label className="block">
@@ -231,7 +391,7 @@ function FieldWithAction({
         <span>{label}</span>
         {status && (
           <span
-            className={`text-xs font-semibold ${
+            className={`inline-flex items-center gap-1 text-xs font-semibold ${
               status.tone === "success"
                 ? "text-green-600"
                 : status.tone === "error"
@@ -239,6 +399,7 @@ function FieldWithAction({
                   : "text-zinc-500"
             }`}
           >
+            {status.icon === "check" && <Check className="h-3.5 w-3.5" aria-hidden="true" />}
             {status.text}
           </span>
         )}
@@ -248,6 +409,7 @@ function FieldWithAction({
           type={type}
           placeholder={placeholder}
           value={value}
+          required={required}
           onChange={(e) => onChange(e.target.value)}
           className="min-w-0 flex-1 rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-950"
         />
@@ -270,13 +432,15 @@ function Field({
   value,
   onChange,
   status,
+  required,
 }: {
   label: string
   type: string
   placeholder: string
   value?: string
   onChange?: (value: string) => void
-  status?: { text: string; tone: "success" | "error" | "neutral" }
+  status?: { text: string; tone: "success" | "error" | "neutral"; icon?: "check" }
+  required?: boolean
 }) {
   return (
     <label className="block">
@@ -284,7 +448,7 @@ function Field({
         <span>{label}</span>
         {status && (
           <span
-            className={`text-xs font-semibold ${
+            className={`inline-flex items-center gap-1 text-xs font-semibold ${
               status.tone === "success"
                 ? "text-green-600"
                 : status.tone === "error"
@@ -292,6 +456,7 @@ function Field({
                   : "text-zinc-500"
             }`}
           >
+            {status.icon === "check" && <Check className="h-3.5 w-3.5" aria-hidden="true" />}
             {status.text}
           </span>
         )}
@@ -300,6 +465,7 @@ function Field({
         type={type}
         placeholder={placeholder}
         value={value}
+        required={required}
         onChange={onChange ? (e) => onChange(e.target.value) : undefined}
         className="w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-950"
       />
