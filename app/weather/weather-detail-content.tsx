@@ -168,7 +168,7 @@ export function WeatherDetailContent() {
         <header className="mt-8">
           <div className="flex items-center gap-2 text-sm font-medium text-zinc-500">
             <MapPin className="h-4 w-4" aria-hidden="true" />
-            <span>서울 · 도쿄 · 뉴욕 · 런던</span>
+            <span>세계 주요도시 날씨</span>
           </div>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
             1주일 날씨 예보

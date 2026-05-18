@@ -107,6 +107,35 @@ function LoginForm() {
 }
 
 function SignupForm() {
+  const [username, setUsername] = useState("")
+  const [usernameStatus, setUsernameStatus] = useState<
+    "idle" | "checking" | "available" | "taken" | "error"
+  >("idle")
+  const [password, setPassword] = useState("")
+  const [passwordConfirm, setPasswordConfirm] = useState("")
+
+  const passwordMismatch = passwordConfirm.length > 0 && password !== passwordConfirm
+
+  const checkUsername = async () => {
+    const trimmed = username.trim()
+    if (!trimmed) {
+      setUsernameStatus("idle")
+      return
+    }
+
+    setUsernameStatus("checking")
+    try {
+      const res = await fetch(`/api/auth/check-id?username=${encodeURIComponent(trimmed)}`)
+      const data = (await res.json()) as { available?: boolean }
+      if (!res.ok) {
+        throw new Error("아이디 중복 확인에 실패했습니다.")
+      }
+      setUsernameStatus(data.available ? "available" : "taken")
+    } catch {
+      setUsernameStatus("error")
+    }
+  }
+
   return (
     <div className="mt-8">
       <div className="flex items-center gap-3">
@@ -120,9 +149,50 @@ function SignupForm() {
       </div>
 
       <form className="mt-8 space-y-4">
-        <Field label="이름" type="text" placeholder="이름을 입력하세요" />
+        <FieldWithAction
+          label="아이디"
+          type="text"
+          placeholder="아이디를 입력하세요"
+          actionLabel="중복 확인"
+          value={username}
+          onChange={(value) => {
+            setUsername(value)
+            setUsernameStatus("idle")
+          }}
+          onAction={checkUsername}
+          status={
+            usernameStatus === "checking"
+              ? { text: "확인 중...", tone: "neutral" }
+              : usernameStatus === "available"
+                ? { text: "사용가능", tone: "success" }
+                : usernameStatus === "taken"
+                  ? { text: "이미 사용중", tone: "error" }
+                  : usernameStatus === "error"
+                    ? { text: "확인 실패", tone: "error" }
+                    : undefined
+          }
+        />
+        <Field label="닉네임" type="text" placeholder="닉네임을 입력하세요" />
+        <Field
+          label="비밀번호"
+          type="password"
+          placeholder="비밀번호를 설정하세요"
+          value={password}
+          onChange={setPassword}
+        />
+        <Field
+          label="비밀번호 확인"
+          type="password"
+          placeholder="비밀번호를 다시 입력하세요"
+          value={passwordConfirm}
+          onChange={setPasswordConfirm}
+          status={
+            passwordMismatch
+              ? { text: "비밀번호가 다릅니다", tone: "error" }
+              : undefined
+          }
+        />
         <Field label="이메일" type="email" placeholder="you@example.com" />
-        <Field label="비밀번호" type="password" placeholder="비밀번호를 설정하세요" />
 
         <button
           type="submit"
@@ -136,21 +206,101 @@ function SignupForm() {
   )
 }
 
-function Field({
+function FieldWithAction({
   label,
   type,
   placeholder,
+  actionLabel,
+  value,
+  onChange,
+  onAction,
+  status,
 }: {
   label: string
   type: string
   placeholder: string
+  actionLabel: string
+  value: string
+  onChange: (value: string) => void
+  onAction: () => void
+  status?: { text: string; tone: "success" | "error" | "neutral" }
 }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-medium text-zinc-700">{label}</span>
+      <span className="mb-2 flex items-center gap-2 text-sm font-medium text-zinc-700">
+        <span>{label}</span>
+        {status && (
+          <span
+            className={`text-xs font-semibold ${
+              status.tone === "success"
+                ? "text-green-600"
+                : status.tone === "error"
+                  ? "text-red-600"
+                  : "text-zinc-500"
+            }`}
+          >
+            {status.text}
+          </span>
+        )}
+      </span>
+      <div className="flex gap-2">
+        <input
+          type={type}
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="min-w-0 flex-1 rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-950"
+        />
+        <button
+          type="button"
+          onClick={onAction}
+          className="shrink-0 rounded-xl border border-zinc-900 bg-white px-4 py-3 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-50"
+        >
+          {actionLabel}
+        </button>
+      </div>
+    </label>
+  )
+}
+
+function Field({
+  label,
+  type,
+  placeholder,
+  value,
+  onChange,
+  status,
+}: {
+  label: string
+  type: string
+  placeholder: string
+  value?: string
+  onChange?: (value: string) => void
+  status?: { text: string; tone: "success" | "error" | "neutral" }
+}) {
+  return (
+    <label className="block">
+      <span className="mb-2 flex items-center gap-2 text-sm font-medium text-zinc-700">
+        <span>{label}</span>
+        {status && (
+          <span
+            className={`text-xs font-semibold ${
+              status.tone === "success"
+                ? "text-green-600"
+                : status.tone === "error"
+                  ? "text-red-600"
+                  : "text-zinc-500"
+            }`}
+          >
+            {status.text}
+          </span>
+        )}
+      </span>
       <input
         type={type}
         placeholder={placeholder}
+        value={value}
+        onChange={onChange ? (e) => onChange(e.target.value) : undefined}
         className="w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-950"
       />
     </label>
