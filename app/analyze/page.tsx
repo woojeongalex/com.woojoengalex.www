@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react"
 import { CheckCircle2, Mic, Music4, Radio, Sparkles, StopCircle, Waves } from "lucide-react"
+import { PageBackButton } from "@/components/page-back-button"
 
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000"
@@ -83,6 +84,7 @@ export default function AnalyzePage() {
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-white px-4 py-10 text-zinc-950">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
+        <PageBackButton />
         <section className="rounded-[2rem] border border-zinc-200 bg-zinc-950 px-6 py-10 text-white shadow-[0_24px_60px_rgba(0,0,0,0.12)] sm:px-10">
           <p className="text-sm font-medium tracking-[0.18em] text-zinc-400 uppercase">
             Analyze Session
