@@ -1,28 +1,16 @@
 import { readFileSync } from "fs"
 import { join } from "path"
 import { NextResponse } from "next/server"
+import { UI_ERRORS } from "@/lib/user-facing-error"
+import {
+  WEATHER_API_BASE,
+  weatherDetailError,
+  weatherProxyFailure,
+} from "@/app/api/weather/_lib"
 
 export const runtime = "nodejs"
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
-  "http://127.0.0.1:8000"
-
 const BACKEND_FETCH_MS = 4000
-
-function parseFastApiError(detail: unknown): string {
-  if (typeof detail === "string") return detail
-  if (Array.isArray(detail)) {
-    return detail
-      .map((item) =>
-        typeof item === "object" && item !== null && "msg" in item
-          ? String((item as { msg: string }).msg)
-          : String(item)
-      )
-      .join(", ")
-  }
-  return "날씨를 불러오지 못했습니다."
-}
 
 function readOpenWeatherKey(): string | null {
   if (process.env.OPENWEATHER_API_KEY?.trim()) {
@@ -49,17 +37,16 @@ async function fetchOpenWeatherDirect(apiKey: string) {
   const data = (await res.json()) as {
     main?: { temp?: number }
     weather?: { description?: string }[]
-    message?: string
   }
 
   if (!res.ok) {
-    throw new Error(data.message ?? `OpenWeather API 오류 (${res.status})`)
+    throw new Error("openweather_failed")
   }
 
   const temp = data.main?.temp
   const description = data.weather?.[0]?.description
   if (temp === undefined || !description) {
-    throw new Error("OpenWeather 응답 형식이 올바르지 않습니다.")
+    throw new Error("openweather_invalid")
   }
 
   return { temp: Math.round(temp), description }
@@ -70,7 +57,7 @@ async function fetchFromBackend() {
   const timeout = setTimeout(() => controller.abort(), BACKEND_FETCH_MS)
 
   try {
-    const res = await fetch(`${API_BASE}/api/weather`, {
+    const res = await fetch(`${WEATHER_API_BASE}/api/weather`, {
       cache: "no-store",
       signal: controller.signal,
     })
@@ -81,11 +68,11 @@ async function fetchFromBackend() {
     }
 
     if (!res.ok) {
-      throw new Error(parseFastApiError(data.detail))
+      throw new Error(weatherDetailError(data.detail))
     }
 
     if (data.temp === undefined || !data.description) {
-      throw new Error("백엔드 응답 형식이 올바르지 않습니다.")
+      throw new Error("backend_invalid")
     }
 
     return { temp: data.temp, description: data.description }
@@ -98,29 +85,17 @@ export async function GET() {
   try {
     const weather = await fetchFromBackend()
     return NextResponse.json(weather)
-  } catch (backendError) {
+  } catch {
     const apiKey = readOpenWeatherKey()
     if (apiKey) {
       try {
         const weather = await fetchOpenWeatherDirect(apiKey)
         return NextResponse.json(weather)
-      } catch (directError) {
-        const message =
-          directError instanceof Error ? directError.message : "알 수 없는 오류"
-        return NextResponse.json({ error: message }, { status: 502 })
+      } catch {
+        return weatherProxyFailure(UI_ERRORS.weatherFailed, 502)
       }
     }
 
-    const hint =
-      backendError instanceof Error && backendError.name === "AbortError"
-        ? `백엔드(${API_BASE}) 응답 시간이 초과되었습니다.`
-        : `백엔드(${API_BASE})에 연결할 수 없습니다.`
-
-    return NextResponse.json(
-      {
-        error: `${hint} backend/apps 에서 uvicorn main:app --reload 를 실행하거나, backend/.env 의 OPENWEATHER_API_KEY 를 확인해 주세요.`,
-      },
-      { status: 503 }
-    )
+    return weatherProxyFailure(UI_ERRORS.weatherFailed)
   }
 }

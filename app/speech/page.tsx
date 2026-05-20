@@ -16,6 +16,11 @@ import {
   Waves,
 } from "lucide-react"
 import { PageBackButton } from "@/components/page-back-button"
+import {
+  UserFacingError,
+  UI_ERRORS,
+  apiErrorOrFallback,
+} from "@/lib/user-facing-error"
 
 type ConcernId =
   | "presentation"
@@ -228,15 +233,17 @@ export default function SpeechPage() {
       })
       const data = (await res.json()) as { reply?: string; error?: string }
       if (!res.ok) {
-        throw new Error(data.error ?? "AI 응답을 받지 못했습니다.")
+        throw new UserFacingError(
+          apiErrorOrFallback(data.error, UI_ERRORS.aiCoachingFailed)
+        )
       }
       setAiReply(data.reply ?? "")
       setStatusMessage("AI 코칭이 완료되었습니다. 아래 답변을 확인하세요.")
     } catch (e) {
-      const message =
-        e instanceof Error ? e.message : "AI 코칭 요청 중 오류가 발생했습니다."
-      setAiError(message)
-      setStatusMessage("다시 시도하거나 백엔드(GEMINI_API_KEY) 설정을 확인해 주세요.")
+      setAiError(
+        e instanceof UserFacingError ? e.message : UI_ERRORS.aiCoachingFailed
+      )
+      setStatusMessage("다시 시도하거나 잠시 후에 시도해 주세요.")
     } finally {
       setIsAnalyzing(false)
     }
@@ -441,7 +448,10 @@ export default function SpeechPage() {
             </div>
 
             {aiError && (
-              <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              <p
+                className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+                role="status"
+              >
                 {aiError}
               </p>
             )}

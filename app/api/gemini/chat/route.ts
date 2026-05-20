@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { parseFastApiDetail, UI_ERRORS } from "@/lib/user-facing-error"
 
 export const runtime = "nodejs"
 
@@ -6,32 +7,17 @@ const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
   "http://127.0.0.1:8000"
 
-function parseFastApiError(detail: unknown): string {
-  let message = "요청에 실패했습니다."
-  if (typeof detail === "string") message = detail
-  else if (Array.isArray(detail)) {
-    message = detail
-      .map((item) =>
-        typeof item === "object" && item !== null && "msg" in item
-          ? String((item as { msg: string }).msg)
-          : String(item)
-      )
-      .join(", ")
-  }
-
-  const lower = message.toLowerCase()
+function geminiErrorFromDetail(detail: unknown): string {
+  const msg = parseFastApiDetail(detail, UI_ERRORS.geminiFailed)
+  const lower = msg.toLowerCase()
   if (
-    message.includes("429") ||
+    msg.includes("429") ||
     lower.includes("quota") ||
     lower.includes("할당량")
   ) {
-    return (
-      "Gemini API 할당량을 초과했거나, 선택한 모델을 사용할 수 없습니다. " +
-      "Google AI Studio에서 사용량을 확인하거나, 잠시 후 다시 시도해 주세요."
-    )
+    return UI_ERRORS.geminiQuota
   }
-  if (message.length > 320) return message.slice(0, 320) + "…"
-  return message
+  return msg
 }
 
 export async function POST(req: Request) {
@@ -49,22 +35,21 @@ export async function POST(req: Request) {
       body: JSON.stringify({ message }),
     })
 
-    const data = (await res.json()) as { reply?: string; detail?: unknown }
+    const data = (await res.json()) as { reply?: string; detail?: unknown; error?: string }
 
     if (!res.ok) {
       return NextResponse.json(
-        { error: parseFastApiError(data.detail) },
+        { error: geminiErrorFromDetail(data.detail ?? data.error) },
         { status: res.status }
       )
     }
 
     if (!data.reply?.trim()) {
-      return NextResponse.json({ error: "응답 본문이 비어 있습니다." }, { status: 502 })
+      return NextResponse.json({ error: UI_ERRORS.geminiFailed }, { status: 502 })
     }
 
     return NextResponse.json({ reply: data.reply })
-  } catch (e) {
-    const message = e instanceof Error ? e.message : "알 수 없는 오류"
-    return NextResponse.json({ error: message }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: UI_ERRORS.geminiFailed }, { status: 500 })
   }
 }

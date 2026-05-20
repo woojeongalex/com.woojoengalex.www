@@ -2,15 +2,16 @@
 
 import { useEffect, useRef, useState } from "react"
 import { EyeOff, LayoutGrid, Mic, Plus } from "lucide-react"
+import { useAsyncAction } from "@/hooks/use-async-action"
+import { UserFacingError, UI_ERRORS, apiErrorOrFallback } from "@/lib/user-facing-error"
 
 type ChatMessage = { id: string; role: "user" | "assistant"; content: string }
 
 export function GeminiChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [modelTier, setModelTier] = useState<"fast" | "pro">("fast")
+  const { loading, error, run, setError } = useAsyncAction()
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -29,42 +30,36 @@ export function GeminiChat() {
       role: "user",
       content: trimmed,
     }
-    const nextMessages = [...messages, userMsg]
-    setMessages(nextMessages)
+    setMessages((prev) => [...prev, userMsg])
     setInput("")
-    setLoading(true)
 
-    try {
-      const res = await fetch("/api/gemini/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: trimmed }),
-      })
-      const data = (await res.json()) as { reply?: string; error?: string }
-      if (!res.ok) {
-        throw new Error(data.error ?? "요청에 실패했습니다.")
-      }
-      const reply = data.reply?.trim()
-      if (!reply) {
-        throw new Error("응답 본문이 비어 있습니다.")
-      }
-      setMessages((prev) => [
-        ...prev,
-        { id: crypto.randomUUID(), role: "assistant", content: reply },
-      ])
-    } catch (e) {
-      const raw = e instanceof Error ? e.message : "알 수 없는 오류"
-      const lower = raw.toLowerCase()
-      const friendly =
-        raw.includes("429") || lower.includes("quota") || lower.includes("할당량")
-          ? "Gemini API 할당량을 초과했습니다. Google AI Studio 사용량을 확인하거나 잠시 후 다시 시도해 주세요."
-          : raw.length > 320
-            ? raw.slice(0, 320) + "…"
-            : raw
-      setError(friendly)
-    } finally {
-      setLoading(false)
-    }
+    await run(
+      async () => {
+        const res = await fetch("/api/gemini/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: trimmed }),
+        })
+        const data = (await res.json()) as { reply?: string; error?: string }
+        if (!res.ok) {
+          const msg = apiErrorOrFallback(data.error, UI_ERRORS.geminiFailed)
+          const lower = msg.toLowerCase()
+          if (msg.includes("429") || lower.includes("quota") || lower.includes("할당량")) {
+            throw new UserFacingError(UI_ERRORS.geminiQuota)
+          }
+          throw new UserFacingError(msg)
+        }
+        const reply = data.reply?.trim()
+        if (!reply) {
+          throw new UserFacingError(UI_ERRORS.geminiFailed)
+        }
+        setMessages((prev) => [
+          ...prev,
+          { id: crypto.randomUUID(), role: "assistant", content: reply },
+        ])
+      },
+      { fallbackError: UI_ERRORS.geminiFailed }
+    )
   }
 
   const hasThread = messages.length > 0 || loading
@@ -190,7 +185,7 @@ export function GeminiChat() {
       </div>
 
       {error && (
-        <p className="mt-3 text-sm text-red-600" role="alert">
+        <p className="mt-3 text-sm text-red-600" role="status">
           {error}
         </p>
       )}

@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowRight, LockKeyhole } from "lucide-react"
 import { postAuthJson } from "@/lib/auth-client"
@@ -12,24 +11,26 @@ import { AuthFormMessage, AuthFormShell, btnPrimary, Field, FormHeader } from ".
 
 export function LoginForm() {
   const router = useRouter()
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
   const { loading, error, run } = useAsyncAction()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    const raw = Object.fromEntries(new FormData(e.currentTarget).entries())
+    const username = String(raw.username ?? "").trim()
+    const password = String(raw.password ?? "")
+
     await run(
       () =>
         postAuthJson<LoginResponse>(
           "/api/auth/login",
-          { username: username.trim(), password },
+          { username, password },
           AUTH_MESSAGES.loginFailed
         ),
       {
         fallbackError: AUTH_MESSAGES.loginFailed,
         onSuccess: (data) => {
           setUserSession({
-            username: data.username ?? username.trim(),
+            username: data.username ?? username,
             nickname: data.nickname,
           })
           router.push("/")
@@ -43,20 +44,18 @@ export function LoginForm() {
       <FormHeader icon={LockKeyhole} label="로그인" title="계정으로 계속하기" />
       <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
         <Field
+          name="username"
           label="아이디"
           type="text"
           placeholder="아이디를 입력하세요"
-          value={username}
           required
-          onChange={setUsername}
         />
         <Field
+          name="password"
           label="비밀번호"
           type="password"
           placeholder="비밀번호를 입력하세요"
-          value={password}
           required
-          onChange={setPassword}
         />
         <AuthFormMessage error={error} />
         <button type="submit" disabled={loading} className={btnPrimary}>

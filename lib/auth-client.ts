@@ -1,5 +1,10 @@
 /** 브라우저 → Next /api/auth 호출 */
 
+import {
+  UserFacingError,
+  apiErrorOrFallback,
+} from "@/lib/user-facing-error"
+
 async function parseJsonResponse<T>(
   res: Response,
   fallbackError: string
@@ -9,10 +14,10 @@ async function parseJsonResponse<T>(
   try {
     data = raw ? (JSON.parse(raw) as T & { error?: string }) : ({} as T)
   } catch {
-    throw new Error(raw.slice(0, 120) || fallbackError)
+    throw new UserFacingError(fallbackError)
   }
   if (!res.ok) {
-    throw new Error(data.error ?? fallbackError)
+    throw new UserFacingError(apiErrorOrFallback(data.error, fallbackError))
   }
   return data
 }

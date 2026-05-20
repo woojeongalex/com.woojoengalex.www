@@ -38,7 +38,7 @@ export function AuthFormMessage({
   return (
     <>
       {error && (
-        <p className="text-sm font-medium text-red-600" role="alert">
+        <p className="text-sm font-medium text-red-600" role="status">
           {error}
         </p>
       )}
@@ -95,6 +95,7 @@ const inputClass =
   "w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-950"
 
 export function Field({
+  name,
   label,
   type,
   placeholder,
@@ -103,14 +104,16 @@ export function Field({
   status,
   required,
 }: {
+  name?: string
   label: string
   type: string
   placeholder: string
-  value: string
-  onChange: (value: string) => void
+  value?: string
+  onChange?: (value: string) => void
   status?: FieldStatus
   required?: boolean
 }) {
+  const controlled = value !== undefined && onChange !== undefined
   return (
     <label className="block">
       <span className="mb-2 flex items-center gap-2 text-sm font-medium text-zinc-700">
@@ -118,18 +121,21 @@ export function Field({
         <StatusBadge status={status} />
       </span>
       <input
+        name={name}
         type={type}
         placeholder={placeholder}
-        value={value}
         required={required}
-        onChange={(e) => onChange(e.target.value)}
         className={inputClass}
+        {...(controlled
+          ? { value, onChange: (e) => onChange(e.target.value) }
+          : { defaultValue: "" })}
       />
     </label>
   )
 }
 
 export function FieldWithAction({
+  name,
   label,
   type,
   placeholder,
@@ -140,6 +146,7 @@ export function FieldWithAction({
   status,
   required,
 }: {
+  name?: string
   label: string
   type: string
   placeholder: string
@@ -158,6 +165,7 @@ export function FieldWithAction({
       </span>
       <div className="flex gap-2">
         <input
+          name={name}
           type={type}
           placeholder={placeholder}
           value={value}

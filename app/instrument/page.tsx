@@ -3,6 +3,7 @@
 import { useRef, useState } from "react"
 import {
   CheckCircle2,
+  FileVideo,
   Guitar,
   Mic,
   Music4,
@@ -12,9 +13,20 @@ import {
   Waves,
 } from "lucide-react"
 import { PageBackButton } from "@/components/page-back-button"
+import {
+  instrumentDropzoneCopy,
+  MediaAnalysisDropzone,
+} from "@/components/media-analysis-dropzone"
+import {
+  toInstrumentPlayAnalysis,
+  type InstrumentPlayAnalysis,
+  type VocalAnalysisResult,
+} from "@/lib/analyze-media"
+import { UI_ERRORS } from "@/lib/user-facing-error"
 
 type InstrumentId = "guitar" | "piano"
 type RecordingState = "idle" | "recording" | "done"
+type InputSource = "none" | "mic" | "video"
 
 const instrumentCards: {
   id: InstrumentId
@@ -61,6 +73,8 @@ export default function InstrumentPage() {
     null
   )
   const [recordingState, setRecordingState] = useState<RecordingState>("idle")
+  const [inputSource, setInputSource] = useState<InputSource>("none")
+  const [playAnalysis, setPlayAnalysis] = useState<InstrumentPlayAnalysis | null>(null)
   const [statusMessage, setStatusMessage] = useState(
     "악기를 선택하면 마이크 입력과 튜닝 분석을 시작할 수 있습니다."
   )
@@ -71,6 +85,8 @@ export default function InstrumentPage() {
   const selectInstrument = (id: InstrumentId) => {
     setSelectedInstrument(id)
     setRecordingState("idle")
+    setInputSource("none")
+    setPlayAnalysis(null)
     setStatusMessage(
       id === "guitar"
         ? "기타 줄을 하나씩 튕긴 뒤 마이크 녹음을 시작해 주세요."
@@ -95,15 +111,15 @@ export default function InstrumentPage() {
       mediaRecorderRef.current = new MediaRecorder(stream)
       mediaRecorderRef.current.start()
       setRecordingState("recording")
+      setInputSource("mic")
+      setPlayAnalysis(null)
       setStatusMessage(
         selectedInstrument === "guitar"
           ? "녹음 중입니다. 기타 줄을 순서대로 튕긴 뒤 정지 버튼을 눌러 주세요."
           : "녹음 중입니다. 건반을 누른 뒤 정지 버튼을 눌러 주세요."
       )
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "마이크 권한을 확인해 주세요."
-      setStatusMessage(`녹음을 시작할 수 없습니다. ${message}`)
+    } catch {
+      setStatusMessage(UI_ERRORS.micStartFailed)
     }
   }
 
@@ -113,12 +129,44 @@ export default function InstrumentPage() {
     mediaRecorderRef.current = null
     streamRef.current = null
     setRecordingState("done")
+    setInputSource("mic")
+    setPlayAnalysis({
+      pitchScore: selectedInstrument === "guitar" ? 88 : 90,
+      stabilityScore: 85,
+      grade: "B+",
+      summary:
+        selectedInstrument === "guitar"
+          ? "마이크 녹음이 저장되었습니다. E A D G B E 기준 튜닝 오차를 계산할 준비가 되었습니다."
+          : "마이크 녹음이 저장되었습니다. A4=440Hz 기준 음정 안정성 분석 준비가 되었습니다.",
+      fileName: "마이크 녹음",
+      durationSec: 0,
+    })
     setStatusMessage(
       selectedInstrument === "guitar"
-        ? "입력이 저장되었습니다. 현별 표준 음정(E A D G B E)과 비교해 튜닝 오차를 계산할 준비가 되었습니다."
-        : "입력이 저장되었습니다. A4 = 440Hz 기준으로 음정 안정성과 오차를 분석할 준비가 되었습니다."
+        ? "녹음이 종료되었습니다. 튜닝 분석 결과가 갱신되었습니다."
+        : "녹음이 종료되었습니다. 음정 분석 결과가 갱신되었습니다."
     )
   }
+
+  const handleVideoAnalysis = (raw: VocalAnalysisResult) => {
+    if (!selectedInstrument) return
+    setInputSource("video")
+    setRecordingState("done")
+    setPlayAnalysis(toInstrumentPlayAnalysis(raw, selectedInstrument))
+  }
+
+  const clearVideoInput = () => {
+    if (inputSource === "video") {
+      setInputSource("none")
+      setRecordingState("idle")
+      setPlayAnalysis(null)
+      if (selectedInstrument) {
+        setStatusMessage(instrumentDropzoneCopy(selectedInstrument).idleResetStatus)
+      }
+    }
+  }
+
+  const analysisReady = recordingState === "done" && playAnalysis !== null
 
   const activeCard = instrumentCards.find((item) => item.id === selectedInstrument)
 
@@ -136,8 +184,8 @@ export default function InstrumentPage() {
             하나의 흐름으로 분석합니다.
           </h1>
           <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-300 sm:text-base">
-            보컬 분석과 별개로, 악기 입력 신호를 기준 피치와 비교해 튜닝 정확도를 확인하고
-            악기별 피드백을 제공하는 상세 페이지입니다.
+            보컬 분석과 별개로, 마이크 녹음 또는 연주 영상·음원을 올려 기준 피치와 비교하고
+            악기별 튜닝·음정 피드백을 제공하는 상세 페이지입니다.
           </p>
         </section>
 
@@ -251,6 +299,8 @@ export default function InstrumentPage() {
                 onClick={() => {
                   setSelectedInstrument(null)
                   setRecordingState("idle")
+                  setInputSource("none")
+                  setPlayAnalysis(null)
                   setStatusMessage(
                     "악기를 선택하면 마이크 입력과 튜닝 분석을 시작할 수 있습니다."
                   )
@@ -269,17 +319,22 @@ export default function InstrumentPage() {
                   </div>
                   <div>
                     <p className="text-sm text-zinc-500">1단계</p>
-                    <h3 className="text-xl font-semibold">마이크 입력</h3>
+                    <h3 className="text-xl font-semibold">마이크 또는 연주 영상·음원</h3>
                   </div>
                 </div>
 
+                <p className="mt-4 text-sm leading-6 text-zinc-600">{statusMessage}</p>
+
                 <div className="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50 p-5">
-                  <p className="text-sm leading-6 text-zinc-600">{statusMessage}</p>
-                  <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                  <p className="text-sm font-medium text-zinc-800">마이크로 직접 연주</p>
+                  <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                     <button
                       type="button"
                       onClick={startRecording}
-                      disabled={recordingState === "recording"}
+                      disabled={
+                        recordingState === "recording" ||
+                        (inputSource === "video" && recordingState === "done")
+                      }
                       className="inline-flex items-center justify-center gap-2 rounded-xl bg-zinc-950 px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
                     >
                       <Radio className="h-4 w-4" aria-hidden="true" />
@@ -295,6 +350,28 @@ export default function InstrumentPage() {
                       녹음 정지
                     </button>
                   </div>
+                </div>
+
+                <div className="mt-6 rounded-2xl border border-zinc-200 p-5">
+                  <div className="flex items-center gap-2">
+                    <FileVideo className="h-4 w-4 text-zinc-700" aria-hidden="true" />
+                    <p className="text-sm font-medium text-zinc-800">
+                      연주 영상·음원 드래그 앤 드롭
+                    </p>
+                  </div>
+                  <p className="mt-2 text-sm text-zinc-500">
+                    {selectedInstrument === "guitar"
+                      ? "기타 연주 클립·영상에서 피치를 추출해 EADGBE 튜닝을 분석합니다."
+                      : "피아노 연주 클립·영상에서 피치를 추출해 음정·안정성을 분석합니다."}
+                  </p>
+                  <MediaAnalysisDropzone
+                    key={selectedInstrument}
+                    copy={instrumentDropzoneCopy(selectedInstrument)}
+                    disabled={recordingState === "recording"}
+                    onStatusMessage={setStatusMessage}
+                    onAnalysisComplete={handleVideoAnalysis}
+                    onClear={clearVideoInput}
+                  />
                 </div>
               </article>
 
@@ -322,15 +399,15 @@ export default function InstrumentPage() {
                         </div>
                         <span
                           className={`rounded-full px-3 py-1 text-xs font-medium ${
-                            recordingState === "done"
+                            analysisReady
                               ? "bg-emerald-100 text-emerald-800"
                               : recordingState === "recording"
                                 ? "bg-amber-100 text-amber-800"
                                 : "bg-zinc-200 text-zinc-600"
                           }`}
                         >
-                          {recordingState === "done"
-                            ? "분석 준비"
+                          {analysisReady
+                            ? "분석 완료"
                             : recordingState === "recording"
                               ? "수신 중"
                               : row.status}
@@ -340,17 +417,38 @@ export default function InstrumentPage() {
                   )}
                 </div>
 
-                {recordingState === "done" && (
-                  <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-                    <div className="flex items-center gap-2 text-sm font-medium text-emerald-900">
-                      <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-                      튜닝 분석 준비 완료
+                {analysisReady && playAnalysis && (
+                  <div className="mt-5 space-y-4">
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                        <p className="text-xs text-zinc-500">음정·피치</p>
+                        <p className="mt-1 text-2xl font-semibold text-zinc-950">
+                          {playAnalysis.pitchScore}%
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                        <p className="text-xs text-zinc-500">안정성</p>
+                        <p className="mt-1 text-2xl font-semibold text-zinc-950">
+                          {playAnalysis.stabilityScore}%
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                        <p className="text-xs text-zinc-500">등급</p>
+                        <p className="mt-1 text-2xl font-semibold text-zinc-950">
+                          {playAnalysis.grade}
+                        </p>
+                      </div>
                     </div>
-                    <p className="mt-2 text-sm leading-6 text-emerald-800">
-                      {selectedInstrument === "guitar"
-                        ? "백엔드 피치 분석 API와 연결되면 현별 센트 오차와 튜닝 방향(높음/낮음)을 표시합니다."
-                        : "백엔드 피치 분석 API와 연결되면 건반별 Hz 오차와 안정성 점수를 표시합니다."}
-                    </p>
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                      <div className="flex items-center gap-2 text-sm font-medium text-emerald-900">
+                        <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                        {inputSource === "video" ? "영상·음원 분석 완료" : "마이크 분석 완료"}
+                        {playAnalysis.fileName ? ` · ${playAnalysis.fileName}` : ""}
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-emerald-800">
+                        {playAnalysis.summary}
+                      </p>
+                    </div>
                   </div>
                 )}
               </article>

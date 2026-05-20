@@ -1,26 +1,14 @@
 import { NextResponse } from "next/server"
+import { UI_ERRORS } from "@/lib/user-facing-error"
+import {
+  WEATHER_API_BASE,
+  weatherCatchResponse,
+  weatherDetailError,
+} from "@/app/api/weather/_lib"
 
 export const runtime = "nodejs"
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
-  "http://127.0.0.1:8000"
-
 const BACKEND_FETCH_MS = 8000
-
-function parseFastApiError(detail: unknown): string {
-  if (typeof detail === "string") return detail
-  if (Array.isArray(detail)) {
-    return detail
-      .map((item) =>
-        typeof item === "object" && item !== null && "msg" in item
-          ? String((item as { msg: string }).msg)
-          : String(item)
-      )
-      .join(", ")
-  }
-  return "예보를 불러오지 못했습니다."
-}
 
 export async function GET(request: Request) {
   const city = new URL(request.url).searchParams.get("city") ?? "seoul"
@@ -29,11 +17,8 @@ export async function GET(request: Request) {
 
   try {
     const res = await fetch(
-      `${API_BASE}/api/weather/forecast?city=${encodeURIComponent(city)}`,
-      {
-        cache: "no-store",
-        signal: controller.signal,
-      }
+      `${WEATHER_API_BASE}/api/weather/forecast?city=${encodeURIComponent(city)}`,
+      { cache: "no-store", signal: controller.signal }
     )
     const data = (await res.json()) as {
       city?: string
@@ -44,29 +29,18 @@ export async function GET(request: Request) {
 
     if (!res.ok) {
       return NextResponse.json(
-        { error: parseFastApiError(data.detail ?? data.error) },
+        { error: weatherDetailError(data.detail ?? data.error, UI_ERRORS.weatherForecastFailed) },
         { status: res.status }
       )
     }
 
     if (!Array.isArray(data.days) || data.days.length === 0) {
-      return NextResponse.json({ error: "예보 데이터가 비어 있습니다." }, { status: 502 })
+      return NextResponse.json({ error: UI_ERRORS.weatherForecastFailed }, { status: 502 })
     }
 
     return NextResponse.json({ city: data.city ?? "Seoul", days: data.days })
   } catch (e) {
-    const message =
-      e instanceof Error && e.name === "AbortError"
-        ? `백엔드(${API_BASE}) 응답 시간이 초과되었습니다.`
-        : e instanceof Error
-          ? e.message
-          : "알 수 없는 오류"
-    return NextResponse.json(
-      {
-        error: `${message} backend/apps 에서 uvicorn main:app --reload 를 실행해 주세요.`,
-      },
-      { status: 503 }
-    )
+    return weatherCatchResponse(e, UI_ERRORS.weatherForecastFailed)
   } finally {
     clearTimeout(timeout)
   }

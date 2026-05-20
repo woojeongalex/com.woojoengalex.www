@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { parseFastApiDetail, UI_ERRORS } from "@/lib/user-facing-error"
 
 /** Next API → FastAPI 공통 프록시 (auth·chat 등에서 재사용) */
 
@@ -8,27 +9,13 @@ const API_BASE =
 
 const DEFAULT_TIMEOUT_MS = 10_000
 
-function parseFastApiError(detail: unknown, fallback: string): string {
-  if (typeof detail === "string") return detail
-  if (Array.isArray(detail)) {
-    return detail
-      .map((item) =>
-        typeof item === "object" && item !== null && "msg" in item
-          ? String((item as { msg: string }).msg)
-          : String(item)
-      )
-      .join(", ")
-  }
-  return fallback
-}
-
 async function readBody(res: Response): Promise<Record<string, unknown>> {
   const raw = await res.text()
   if (!raw) return {}
   try {
     return JSON.parse(raw) as Record<string, unknown>
   } catch {
-    return { detail: raw.slice(0, 200) }
+    return {}
   }
 }
 
@@ -38,9 +25,9 @@ function proxyError(message: string, status = 503) {
 
 function networkError(e: unknown): string {
   if (e instanceof Error && e.name === "AbortError") {
-    return `백엔드(${API_BASE}) 응답 시간이 초과되었습니다.`
+    return "서버 응답 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요."
   }
-  return e instanceof Error ? e.message : "알 수 없는 오류"
+  return UI_ERRORS.backendUnavailable
 }
 
 async function proxyFetch(
@@ -64,7 +51,7 @@ async function proxyFetch(
     if (!res.ok) {
       return NextResponse.json(
         {
-          error: parseFastApiError(data.detail ?? data.error, fallbackError),
+          error: parseFastApiDetail(data.detail ?? data.error, fallbackError),
         },
         { status: res.status }
       )

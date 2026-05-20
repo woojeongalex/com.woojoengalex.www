@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useCallback, useEffect, useState } from "react"
 import { ChevronRight, CloudSun, Loader2, MapPin, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { UserFacingError, UI_ERRORS, apiErrorOrFallback } from "@/lib/user-facing-error"
 
 type WeatherData = {
   temp: number
@@ -27,17 +28,16 @@ export function WeatherWidget({ variant = "default" }: WeatherWidgetProps) {
       const res = await fetch("/api/weather")
       const data = (await res.json()) as WeatherData & { error?: string }
       if (!res.ok) {
-        throw new Error(data.error ?? "날씨를 불러오지 못했습니다.")
+        throw new UserFacingError(
+          apiErrorOrFallback(data.error, UI_ERRORS.weatherFailed)
+        )
       }
       setWeather({ temp: data.temp, description: data.description })
     } catch (e) {
       setWeather(null)
-      const raw = e instanceof Error ? e.message : "알 수 없는 오류"
-      const friendly =
-        raw === "fetch failed" || raw.includes("Failed to fetch")
-          ? "날씨 서버에 연결하지 못했습니다. 백엔드(uvicorn) 실행 여부를 확인해 주세요."
-          : raw
-      setError(friendly)
+      setError(
+        e instanceof UserFacingError ? e.message : UI_ERRORS.weatherFailed
+      )
     } finally {
       setLoading(false)
     }

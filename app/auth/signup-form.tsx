@@ -45,9 +45,13 @@ export function SignupForm() {
     form.passwordConfirm.length > 0 &&
     form.password === form.passwordConfirm
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (form.password !== form.passwordConfirm) return
+    const raw = Object.fromEntries(new FormData(e.currentTarget).entries())
+    const password = String(raw.password ?? "")
+    const passwordConfirm = String(raw.password_confirm ?? "")
+
+    if (password !== passwordConfirm) return
     if (usernameCheck.status !== "available") {
       setError(AUTH_MESSAGES.idUnavailable)
       return
@@ -62,12 +66,11 @@ export function SignupForm() {
         postAuthJson<SignupResponse>(
           "/api/auth/signup",
           {
-            username: form.username.trim(),
-            nickname: form.nickname.trim(),
-            password: form.password,
-            password_confirm: form.passwordConfirm,
-            email: form.email.trim(),
-            role: "user",
+            username: String(raw.username ?? "").trim(),
+            nickname: String(raw.nickname ?? "").trim(),
+            password,
+            password_confirm: passwordConfirm,
+            email: String(raw.email ?? "").trim(),
           },
           AUTH_MESSAGES.signupFailed
         ),
@@ -88,6 +91,7 @@ export function SignupForm() {
       <FormHeader icon={UserPlus} label="회원가입" title="새 계정 만들기" />
       <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
         <FieldWithAction
+          name="username"
           label="아이디"
           type="text"
           placeholder="아이디를 입력하세요"
@@ -99,6 +103,7 @@ export function SignupForm() {
           status={availabilityLabel(usernameCheck.status)}
         />
         <FieldWithAction
+          name="nickname"
           label="닉네임"
           type="text"
           placeholder="닉네임을 입력하세요"
@@ -110,6 +115,7 @@ export function SignupForm() {
           status={availabilityLabel(nicknameCheck.status, "불가능")}
         />
         <Field
+          name="password"
           label="비밀번호"
           type="password"
           placeholder="비밀번호를 설정하세요"
@@ -118,6 +124,7 @@ export function SignupForm() {
           onChange={updateField("password")}
         />
         <Field
+          name="password_confirm"
           label="비밀번호 확인"
           type="password"
           placeholder="비밀번호를 다시 입력하세요"
@@ -133,6 +140,7 @@ export function SignupForm() {
           }
         />
         <Field
+          name="email"
           label="이메일"
           type="email"
           placeholder="you@example.com"

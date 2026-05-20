@@ -7,6 +7,7 @@ import { ArrowLeft, Loader2, MapPin } from "lucide-react"
 import { WeatherDayIcon, getWeatherLabelClass } from "@/components/weather-day-icon"
 import { cn } from "@/lib/utils"
 import { isWeatherCityId, type WeatherCityId } from "@/lib/weather-cities"
+import { UserFacingError, UI_ERRORS, apiErrorOrFallback } from "@/lib/user-facing-error"
 
 type DailyForecast = {
   date: string
@@ -107,15 +108,21 @@ export function WeatherDetailContent() {
       const res = await fetch("/api/weather/forecasts")
       const data = (await res.json()) as { cities?: CityForecast[]; error?: string }
       if (!res.ok) {
-        throw new Error(data.error ?? "예보를 불러오지 못했습니다.")
+        throw new UserFacingError(
+          apiErrorOrFallback(data.error, UI_ERRORS.weatherForecastFailed)
+        )
       }
       if (!data.cities?.length) {
-        throw new Error("예보 데이터가 비어 있습니다.")
+        throw new UserFacingError(UI_ERRORS.weatherForecastFailed)
       }
       setCities(data.cities)
     } catch (e) {
       setCities([])
-      setError(e instanceof Error ? e.message : "알 수 없는 오류")
+      setError(
+        e instanceof UserFacingError
+          ? e.message
+          : UI_ERRORS.weatherForecastFailed
+      )
     } finally {
       setLoading(false)
     }
