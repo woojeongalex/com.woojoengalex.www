@@ -1,15 +1,11 @@
-import { NextResponse } from "next/server"
-import { proxyGet } from "../_lib/proxy"
+import { createCheckRoute } from "../_lib/create-check-route"
+import { AUTH_MESSAGES } from "@/lib/auth-messages"
 
 export const runtime = "nodejs"
 
-export async function GET(request: Request) {
-  const username = new URL(request.url).searchParams.get("username")?.trim()
-  if (!username) {
-    return NextResponse.json({ error: "아이디를 입력하세요." }, { status: 400 })
-  }
-  return proxyGet(
-    `/api/auth/check-id?username=${encodeURIComponent(username)}`,
-    "아이디 중복 확인에 실패했습니다."
-  )
-}
+export const GET = createCheckRoute({
+  param: "username",
+  backendPath: "/api/auth/check-id",
+  emptyMessage: AUTH_MESSAGES.idRequired,
+  fallbackError: AUTH_MESSAGES.checkIdFailed,
+})

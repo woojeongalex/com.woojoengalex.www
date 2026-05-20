@@ -2,33 +2,16 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
 import { WeatherWidget } from "@/components/weather-widget"
-import {
-  clearUserSession,
-  formatUserHonorific,
-  getUserSession,
-  type UserSession,
-} from "@/lib/auth-session"
+import { useUserSession } from "@/hooks/use-user-session"
+import { clearUserSession, formatUserHonorific } from "@/lib/auth-session"
 
 export function SiteHeader() {
   const router = useRouter()
-  const [user, setUser] = useState<UserSession | null>(null)
-
-  useEffect(() => {
-    const sync = () => setUser(getUserSession())
-    sync()
-    window.addEventListener("storage", sync)
-    window.addEventListener("auth-changed", sync)
-    return () => {
-      window.removeEventListener("storage", sync)
-      window.removeEventListener("auth-changed", sync)
-    }
-  }, [])
+  const user = useUserSession()
 
   const handleLogout = () => {
     clearUserSession()
-    setUser(null)
     router.push("/")
   }
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { proxyPost } from "@/app/api/auth/_lib/proxy"
+import { proxyPost } from "@/app/api/_lib/proxy"
 
 export const runtime = "nodejs"
 

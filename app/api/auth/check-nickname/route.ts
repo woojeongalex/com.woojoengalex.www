@@ -1,15 +1,11 @@
-import { NextResponse } from "next/server"
-import { proxyGet } from "../_lib/proxy"
+import { createCheckRoute } from "../_lib/create-check-route"
+import { AUTH_MESSAGES } from "@/lib/auth-messages"
 
 export const runtime = "nodejs"
 
-export async function GET(request: Request) {
-  const nickname = new URL(request.url).searchParams.get("nickname")?.trim()
-  if (!nickname) {
-    return NextResponse.json({ error: "닉네임을 입력하세요." }, { status: 400 })
-  }
-  return proxyGet(
-    `/api/auth/check-nickname?nickname=${encodeURIComponent(nickname)}`,
-    "닉네임 중복 확인에 실패했습니다."
-  )
-}
+export const GET = createCheckRoute({
+  param: "nickname",
+  backendPath: "/api/auth/check-nickname",
+  emptyMessage: AUTH_MESSAGES.nicknameRequired,
+  fallbackError: AUTH_MESSAGES.checkNicknameFailed,
+})
