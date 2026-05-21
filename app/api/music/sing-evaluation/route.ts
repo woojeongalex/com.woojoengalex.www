@@ -11,5 +11,5 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "요청 본문이 올바르지 않습니다." }, { status: 400 })
   }
-  return proxyPost("/api/music/sing-result", body, UI_ERRORS.requestFailed)
+  return proxyPost("/api/music/sing-evaluation", body, UI_ERRORS.requestFailed)
 }

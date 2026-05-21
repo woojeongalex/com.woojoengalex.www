@@ -17,7 +17,7 @@ import { PageBackButton } from "@/components/page-back-button"
 import { VocalVideoDropzone } from "@/components/vocal-video-dropzone"
 import type { VocalAnalysisResult } from "@/lib/analyze-media"
 import { fetchSongMrSearch, type SongMrHit } from "@/lib/song-mr-api"
-import { postSingResult } from "@/lib/sing-result-api"
+import { postSingEvaluation } from "@/lib/sing-evaluation-api"
 import { UserFacingError, UI_ERRORS } from "@/lib/user-facing-error"
 
 const apiBaseUrl =
@@ -66,12 +66,12 @@ export default function AnalyzePage() {
   const selectedSongRef = useRef<SongMrHit | null>(null)
   selectedSongRef.current = selectedSong
 
-  const persistVocalSingToNeon = useCallback(
+  const persistVocalEvaluationToNeon = useCallback(
     async (analysis: VocalAnalysisResult, source: "mic" | "video") => {
       const song = selectedSongRef.current
       if (!song) return
       try {
-        await postSingResult({
+        await postSingEvaluation({
           catalogSongId: song.catalog_song_id,
           mrSearchListId: song.id,
           inputSource: source,
@@ -185,14 +185,14 @@ export default function AnalyzePage() {
     setStatusMessage(
       "녹음이 종료되었습니다. 분석 결과가 갱신되었습니다. (백엔드 API 연동 시 정밀 분석)"
     )
-    await persistVocalSingToNeon(analysis, "mic")
+    await persistVocalEvaluationToNeon(analysis, "mic")
   }
 
   const handleVideoAnalysis = async (result: VocalAnalysisResult) => {
     setInputSource("video")
     setRecordingState("done")
     setAnalysisResult(result)
-    await persistVocalSingToNeon(result, "video")
+    await persistVocalEvaluationToNeon(result, "video")
   }
 
   const clearVideoInput = () => {
@@ -510,7 +510,7 @@ export default function AnalyzePage() {
                 <ApiRow label="MR 검색·DB 저장" value={`${apiBaseUrl}/api/songs/search?q=`} />
                 <ApiRow
                   label="보컬 분석 결과 저장"
-                  value={`${apiBaseUrl}/api/music/sing-result`}
+                  value={`${apiBaseUrl}/api/music/sing-evaluation`}
                 />
                 <ApiRow label="곡 목록 조회" value={`${apiBaseUrl}/songs`} />
                 <ApiRow label="음원 분석 요청" value={`${apiBaseUrl}/analysis/songs/:songId`} />

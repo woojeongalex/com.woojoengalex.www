@@ -4,7 +4,7 @@ import {
   apiErrorOrFallback,
 } from "@/lib/user-facing-error"
 
-export type SingResultPayload = {
+export type SingEvaluationPayload = {
   catalogSongId?: string | null
   mrSearchListId?: number | null
   inputSource: "mic" | "video"
@@ -16,22 +16,22 @@ export type SingResultPayload = {
   durationSec: number
 }
 
-export type SingResultApiResponse = {
+export type SingEvaluationApiResponse = {
   id: number
   ok: boolean
   message: string
 }
 
-export async function postSingResult(
-  payload: SingResultPayload
-): Promise<SingResultApiResponse> {
-  const res = await fetch("/api/music/sing-result", {
+export async function postSingEvaluation(
+  payload: SingEvaluationPayload
+): Promise<SingEvaluationApiResponse> {
+  const res = await fetch("/api/music/sing-evaluation", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
     cache: "no-store",
   })
-  const data = (await res.json()) as SingResultApiResponse & {
+  const data = (await res.json()) as SingEvaluationApiResponse & {
     error?: string
     detail?: string | unknown
   }
