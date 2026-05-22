@@ -1,55 +1,22 @@
 import { NextResponse } from "next/server"
-import { parseFastApiDetail, UI_ERRORS } from "@/lib/user-facing-error"
+import { generateGeminiText } from "@/lib/gemini-generate"
 
 export const runtime = "nodejs"
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
-  "http://127.0.0.1:8000"
-
-function geminiErrorFromDetail(detail: unknown): string {
-  const msg = parseFastApiDetail(detail, UI_ERRORS.geminiFailed)
-  const lower = msg.toLowerCase()
-  if (
-    msg.includes("429") ||
-    lower.includes("quota") ||
-    lower.includes("할당량")
-  ) {
-    return UI_ERRORS.geminiQuota
-  }
-  return msg
-}
-
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const body = (await req.json()) as { message?: string }
-    const message = String(body.message ?? "").trim()
-
+    const body = (await request.json()) as { message?: string }
+    const message = body.message?.trim()
     if (!message) {
-      return NextResponse.json({ error: "message가 필요합니다." }, { status: 400 })
+      return NextResponse.json({ error: "메시지가 비어 있습니다." }, { status: 400 })
     }
 
-    const res = await fetch(`${API_BASE}/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message }),
-    })
-
-    const data = (await res.json()) as { reply?: string; detail?: unknown; error?: string }
-
-    if (!res.ok) {
-      return NextResponse.json(
-        { error: geminiErrorFromDetail(data.detail ?? data.error) },
-        { status: res.status }
-      )
+    const reply = await generateGeminiText(message)
+    return NextResponse.json({ reply })
+  } catch (error) {
+    if (error instanceof Error && error.message === "MISSING_API_KEY") {
+      return NextResponse.json({ error: "API 키가 설정되지 않았습니다." }, { status: 500 })
     }
-
-    if (!data.reply?.trim()) {
-      return NextResponse.json({ error: UI_ERRORS.geminiFailed }, { status: 502 })
-    }
-
-    return NextResponse.json({ reply: data.reply })
-  } catch {
-    return NextResponse.json({ error: UI_ERRORS.geminiFailed }, { status: 500 })
+    return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 })
   }
 }

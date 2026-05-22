@@ -1,15 +1,22 @@
 import { NextResponse } from "next/server"
-import { proxyPost } from "@/app/api/_lib/proxy"
+import { generateGeminiText } from "@/lib/gemini-generate"
 
 export const runtime = "nodejs"
 
 export async function POST(request: Request) {
-  let body: unknown
   try {
-    body = await request.json()
-  } catch {
-    return NextResponse.json({ error: "요청 본문이 올바르지 않습니다." }, { status: 400 })
-  }
+    const body = (await request.json()) as { prompt?: string }
+    const prompt = body.prompt?.trim()
+    if (!prompt) {
+      return NextResponse.json({ error: "메시지가 비어 있습니다." }, { status: 400 })
+    }
 
-  return proxyPost("/chat", body, "AI 코칭 응답을 받지 못했습니다.", 60_000)
+    const text = await generateGeminiText(prompt)
+    return NextResponse.json({ text })
+  } catch (error) {
+    if (error instanceof Error && error.message === "MISSING_API_KEY") {
+      return NextResponse.json({ error: "API 키가 설정되지 않았습니다." }, { status: 500 })
+    }
+    return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 })
+  }
 }
