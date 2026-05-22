@@ -1,33 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import { useMemo, useState } from "react"
-import { ArrowRight, AudioLines, Music4, Waves } from "lucide-react"
+import { ArrowRight, AudioLines, Music4 } from "lucide-react"
 import { GeminiChat } from "@/components/gemini-chat"
-
-const songOptions = [
-  {
-    id: "spring-day",
-    title: "봄날",
-    artist: "BTS",
-    bpm: 106,
-    key: "E Major",
-  },
-  {
-    id: "through-the-night",
-    title: "밤편지",
-    artist: "IU",
-    bpm: 79,
-    key: "C Major",
-  },
-  {
-    id: "defying-gravity",
-    title: "Defying Gravity",
-    artist: "Wicked",
-    bpm: 84,
-    key: "F Major",
-  },
-]
+import { IuemGuideCarousel } from "@/components/iuem-guide-carousel"
+import { WeeklyKingBanner } from "@/components/weekly-king-banner"
 
 const feedbackSamples = [
   {
@@ -48,17 +25,10 @@ const feedbackSamples = [
 ]
 
 export default function HomePage() {
-  const [selectedSongId, setSelectedSongId] = useState(songOptions[0].id)
-
-  const selectedSong = useMemo(
-    () => songOptions.find((song) => song.id === selectedSongId) ?? songOptions[0],
-    [selectedSongId]
-  )
-
   return (
-    <main className="min-h-[calc(100vh-4rem)] bg-white text-zinc-950">
+    <main className="min-h-[calc(100vh-4rem)] min-w-0 overflow-x-hidden bg-white text-zinc-950">
       <section className="border-b border-zinc-200">
-        <div className="mx-auto flex max-w-6xl flex-col gap-12 px-4 py-14 md:flex-row md:items-center md:justify-between md:py-20">
+        <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 md:flex-row md:items-start md:justify-between md:gap-10 md:py-12">
           <div className="max-w-[34rem]">
             <h1
               className="text-4xl font-semibold leading-[1.05] tracking-tight text-zinc-950 sm:text-5xl md:text-6xl"
@@ -160,78 +130,19 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="w-full max-w-xl rounded-3xl border border-zinc-200 bg-zinc-950 p-6 text-white shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-zinc-400">선택된 곡</p>
-                <h2 className="mt-1 text-2xl font-semibold">{selectedSong.title}</h2>
-                <p className="mt-1 text-sm text-zinc-400">{selectedSong.artist}</p>
-              </div>
-              <div className="rounded-full border border-zinc-700 px-3 py-1 text-xs text-zinc-300">
-                준비 완료
-              </div>
-            </div>
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              {songOptions.map((song) => (
-                <button
-                  key={song.id}
-                  type="button"
-                  onClick={() => setSelectedSongId(song.id)}
-                  className={`rounded-2xl border px-4 py-4 text-left transition-colors ${
-                    selectedSongId === song.id
-                      ? "border-white bg-white text-zinc-950"
-                      : "border-zinc-800 bg-zinc-900 text-white hover:border-zinc-600"
-                  }`}
-                >
-                  <p className="text-sm font-medium">{song.title}</p>
-                  <p
-                    className={`mt-1 text-xs ${
-                      selectedSongId === song.id ? "text-zinc-500" : "text-zinc-400"
-                    }`}
-                  >
-                    {song.artist}
-                  </p>
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-6 grid gap-4 rounded-2xl border border-zinc-800 bg-black/30 p-5 sm:grid-cols-2">
-              <div>
-                <p className="text-sm text-zinc-400">곡 정보</p>
-                <div className="mt-3 space-y-2 text-sm text-zinc-200">
-                  <p>BPM {selectedSong.bpm}</p>
-                  <p>Key {selectedSong.key}</p>
-                  <p>보컬 분석 준비 상태 완료</p>
-                </div>
-              </div>
-              <div>
-                <p className="text-sm text-zinc-400">예상 분석 항목</p>
-                <div className="mt-3 space-y-3">
-                  <AnalysisBar label="음정 정합도" value="92%" />
-                  <AnalysisBar label="박자 정합도" value="88%" />
-                  <AnalysisBar label="발성 안정성" value="85%" />
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-              <div className="flex items-center gap-2 text-sm text-zinc-400">
-                <Waves className="h-4 w-4" aria-hidden="true" />
-                AI 분석 흐름
-              </div>
-              <p className="mt-3 text-sm leading-6 text-zinc-300">
-                선택한 가요 또는 뮤지컬 넘버의 멜로디와 BPM을 먼저 분석하고, 사용자의 마이크
-                입력을 기준으로 음정 이탈 구간과 박자 오차 구간을 비교합니다. 이후 피드백
-                엔진이 연습할 구간을 우선순위로 정리합니다.
-              </p>
-            </div>
+          <div className="mt-8 w-full max-w-xl md:mt-16 md:sticky md:top-32 lg:mt-20">
+            <GeminiChat layout="sidebar" />
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-14">
-        <GeminiChat />
+      <section className="border-b border-zinc-200">
+        <div className="mx-auto max-w-6xl px-4 py-8 md:py-10">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 md:items-start">
+            <WeeklyKingBanner />
+            <IuemGuideCarousel />
+          </div>
+        </div>
       </section>
 
       <section className="border-y border-zinc-200 bg-zinc-50">
@@ -290,19 +201,5 @@ export default function HomePage() {
         </div>
       </section>
     </main>
-  )
-}
-
-function AnalysisBar({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div className="mb-1 flex items-center justify-between text-xs text-zinc-400">
-        <span>{label}</span>
-        <span>{value}</span>
-      </div>
-      <div className="h-2 rounded-full bg-zinc-800">
-        <div className="h-2 rounded-full bg-white" style={{ width: value }} />
-      </div>
-    </div>
   )
 }

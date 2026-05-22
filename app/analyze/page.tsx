@@ -204,17 +204,16 @@ export default function AnalyzePage() {
   }
 
   return (
-    <main className="min-h-[calc(100vh-4rem)] bg-white px-4 py-10 text-zinc-950">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
+    <main className="min-h-[calc(100vh-4rem)] min-w-0 overflow-x-hidden bg-white px-4 py-8 text-zinc-950 sm:py-10">
+      <div className="mx-auto flex w-full min-w-0 max-w-6xl flex-col gap-6 sm:gap-8">
         <PageBackButton />
-        <section className="rounded-[2rem] border border-zinc-200 bg-zinc-950 px-6 py-10 text-white shadow-[0_24px_60px_rgba(0,0,0,0.12)] sm:px-10">
-          <p className="text-sm font-medium tracking-[0.18em] text-zinc-400 uppercase">
+        <section className="rounded-2xl border border-zinc-200 bg-zinc-950 px-4 py-8 text-white shadow-[0_24px_60px_rgba(0,0,0,0.12)] sm:rounded-[2rem] sm:px-6 sm:py-10 md:px-10">
+          <p className="text-xs font-medium tracking-[0.18em] text-zinc-400 uppercase sm:text-sm">
             Analyze Session
           </p>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-            노래 찾기(MR), 마이크·영상 입력, 분석 결과를
-            <br />
-            하나의 화면에서 연결합니다.
+          <h1 className="mt-4 text-2xl font-semibold leading-snug tracking-tight sm:text-4xl sm:leading-tight lg:text-5xl">
+            <span className="block">노래 찾기(MR), 마이크·영상 입력,</span>
+            <span className="block">분석 결과를 하나의 화면에서 연결합니다.</span>
           </h1>
           <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-300 sm:text-base">
             이 페이지는 추후 백엔드 API와 직접 연결될 분석 워크플로우 화면입니다. 노래 제목으로
@@ -223,7 +222,7 @@ export default function AnalyzePage() {
           </p>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <section className="grid min-w-0 gap-6 lg:grid-cols-2 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
           <div className="space-y-6">
             <article className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
               <div className="flex items-center gap-3">
@@ -280,7 +279,7 @@ export default function AnalyzePage() {
                   검색어 &quot;{songFind.submittedQuery}&quot;에 맞는 곡을 찾지 못했습니다.
                 </p>
               ) : (
-                <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="mt-6 grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 lg:grid-cols-3">
                   {songFind.hits.map((song) => (
                     <button
                       key={`${song.catalog_song_id}-${song.id}`}
@@ -408,7 +407,7 @@ export default function AnalyzePage() {
                 </div>
               </div>
 
-              <div className="mt-6 grid gap-4 md:grid-cols-3">
+              <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
                 <ResultCard
                   title="음정 정확도"
                   value={`${result.pitchScore}%`}
@@ -471,21 +470,21 @@ export default function AnalyzePage() {
                   </div>
 
                   <dl className="mt-6 space-y-4 text-sm">
-                    <div className="flex items-center justify-between">
-                      <dt className="text-zinc-500">DB 기록 id</dt>
-                      <dd className="font-mono text-sm font-medium text-zinc-950">
+                    <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
+                      <dt className="shrink-0 text-zinc-500">DB 기록 id</dt>
+                      <dd className="break-all font-mono text-sm font-medium text-zinc-950 sm:text-right">
                         {selectedSong.id}
                       </dd>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                       <dt className="text-zinc-500">BPM</dt>
                       <dd className="font-medium text-zinc-950">{selectedSong.bpm}</dd>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                       <dt className="text-zinc-500">Key</dt>
-                      <dd className="font-medium text-zinc-950">{selectedSong.song_key}</dd>
+                      <dd className="break-words font-medium text-zinc-950">{selectedSong.song_key}</dd>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                       <dt className="text-zinc-500">상태</dt>
                       <dd className="font-medium text-zinc-950">{inputLabel}</dd>
                     </div>
@@ -576,7 +575,7 @@ function ResultCard({
   return (
     <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-5">
       <p className="text-sm text-zinc-500">{title}</p>
-      <p className="mt-3 text-3xl font-semibold text-zinc-950">{value}</p>
+      <p className="mt-3 break-words text-2xl font-semibold text-zinc-950 sm:text-3xl">{value}</p>
       <p className="mt-2 text-sm leading-6 text-zinc-600">{description}</p>
     </div>
   )

@@ -7,7 +7,13 @@ import { UserFacingError, UI_ERRORS, apiErrorOrFallback } from "@/lib/user-facin
 
 type ChatMessage = { id: string; role: "user" | "assistant"; content: string }
 
-export function GeminiChat() {
+type GeminiChatProps = {
+  /** 홈 히어로 오른쪽: 세로만 확대 */
+  layout?: "default" | "sidebar"
+}
+
+export function GeminiChat({ layout = "default" }: GeminiChatProps) {
+  const isSidebar = layout === "sidebar"
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState("")
   const [modelTier, setModelTier] = useState<"fast" | "pro">("fast")
@@ -65,19 +71,37 @@ export function GeminiChat() {
   const hasThread = messages.length > 0 || loading
 
   return (
-    <div className="font-sans antialiased w-full max-w-4xl">
-      <div className="max-w-2xl">
+    <div
+      className={`w-full min-w-0 font-sans antialiased ${isSidebar ? "" : "max-w-4xl"}`}
+    >
+      <div className={isSidebar ? "w-full" : "max-w-2xl"}>
         <p className="text-sm font-medium text-zinc-500">Gemini</p>
-        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl">
+        <h2
+          className={`font-semibold tracking-tight text-zinc-950 ${
+            isSidebar
+              ? "mt-1.5 text-xl sm:text-2xl"
+              : "mt-2 text-2xl sm:text-3xl"
+          }`}
+        >
           가요·뮤지컬 연습, 음정·박자 질문을 Gemini와 나눠 보세요.
         </h2>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-2xl border border-zinc-700/60 bg-[#1e1e1e]">
-        {hasThread && (
+      <div
+        className={`flex flex-col overflow-hidden rounded-2xl border border-zinc-700/60 bg-[#1e1e1e] ${
+          isSidebar ? "mt-4 min-h-[22rem] sm:min-h-[25rem]" : "mt-6"
+        }`}
+      >
+        {(hasThread || isSidebar) && (
           <div
             ref={scrollRef}
-            className="min-h-48 max-h-80 space-y-2 overflow-y-auto border-b border-zinc-700/50 px-4 py-3 text-sm sm:max-h-96"
+            className={`space-y-2 overflow-y-auto border-b border-zinc-700/50 px-4 py-3 text-sm ${
+              isSidebar
+                ? "min-h-[11rem] flex-1 max-h-[16rem] sm:min-h-[13rem] sm:max-h-[20rem]"
+                : hasThread
+                  ? "min-h-48 max-h-80 sm:max-h-96"
+                  : "hidden"
+            }`}
           >
             {messages.map((m) => (
               <div
@@ -98,6 +122,11 @@ export function GeminiChat() {
             {loading && (
               <p className="text-zinc-500">응답 작성 중…</p>
             )}
+            {isSidebar && !hasThread && (
+              <p className="text-center text-zinc-500">
+                연습·음정·박자에 대해 질문을 입력해 보세요.
+              </p>
+            )}
           </div>
         )}
 
@@ -106,7 +135,7 @@ export function GeminiChat() {
         </label>
         <textarea
           id="gemini-input"
-          rows={4}
+          rows={isSidebar ? 3 : 4}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
@@ -116,7 +145,9 @@ export function GeminiChat() {
             }
           }}
           placeholder="프롬프트를 입력해 Gemini가 할 수 있는 일을 확인해 보세요."
-          className="w-full resize-none border-0 bg-transparent px-4 pt-4 pb-2 text-[15px] leading-relaxed text-zinc-100 placeholder:text-zinc-500 outline-none ring-0 focus:ring-0"
+          className={`w-full resize-none border-0 bg-transparent px-4 text-[15px] leading-relaxed text-zinc-100 placeholder:text-zinc-500 outline-none ring-0 focus:ring-0 ${
+            isSidebar ? "pt-3 pb-1.5" : "pt-4 pb-2"
+          }`}
           disabled={loading}
         />
 
@@ -190,7 +221,11 @@ export function GeminiChat() {
         </p>
       )}
 
-      <p className="mt-4 max-w-3xl text-xs leading-relaxed text-zinc-500">
+      <p
+        className={`max-w-3xl text-xs leading-relaxed text-zinc-500 ${
+          isSidebar ? "mt-2" : "mt-4"
+        }`}
+      >
         Gemini는 AI이며 오류를 낼 수 있습니다. 민감한 개인 정보는 입력하지 마세요.
       </p>
     </div>

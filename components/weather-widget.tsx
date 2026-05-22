@@ -53,7 +53,7 @@ export function WeatherWidget({ variant = "default" }: WeatherWidgetProps) {
       className={cn(
         "group transition-colors",
         compact
-          ? "inline-flex h-9 max-w-[11rem] items-center rounded-lg border border-zinc-800 bg-zinc-950 px-2 text-white shadow-sm hover:border-zinc-600 hover:bg-black sm:max-w-none sm:px-2.5"
+          ? "inline-flex h-9 max-w-[11rem] items-center rounded-lg border border-zinc-300 bg-white px-2 text-zinc-900 shadow-sm hover:border-zinc-400 hover:bg-zinc-50 sm:max-w-none sm:px-2.5"
           : "block w-full max-w-md rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm hover:border-zinc-300 hover:bg-zinc-50/80"
       )}
       aria-label={"서울 날씨 — 1주일 예보 보기"}
@@ -64,7 +64,7 @@ export function WeatherWidget({ variant = "default" }: WeatherWidgetProps) {
           className={cn(
             "flex items-center",
             compact
-              ? "justify-center gap-1.5 px-1 text-xs text-zinc-300"
+              ? "justify-center gap-1.5 px-1 text-xs text-zinc-500"
               : "justify-center gap-2 py-3 text-sm text-zinc-500"
           )}
         >
@@ -82,7 +82,7 @@ export function WeatherWidget({ variant = "default" }: WeatherWidgetProps) {
         <span
           className={cn(
             "flex items-center",
-            compact ? "gap-1 px-0.5 text-xs text-red-400" : "flex-col gap-2 py-2 text-center text-red-600"
+            compact ? "gap-1 px-0.5 text-xs text-red-600" : "flex-col gap-2 py-2 text-center text-red-600"
           )}
         >
           <span className={compact ? "truncate" : "text-sm"}>
@@ -98,7 +98,7 @@ export function WeatherWidget({ variant = "default" }: WeatherWidgetProps) {
             className={cn(
               "font-medium underline-offset-2 hover:underline",
               compact
-                ? "shrink-0 rounded p-0.5 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                ? "shrink-0 rounded p-0.5 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
                 : "text-xs text-zinc-600"
             )}
             aria-label={"다시 시도"}
@@ -114,19 +114,19 @@ export function WeatherWidget({ variant = "default" }: WeatherWidgetProps) {
 
       {!loading && weather && compact && (
         <span className="flex min-w-0 items-center gap-1 sm:gap-1.5">
-          <MapPin className="hidden h-3 w-3 shrink-0 text-zinc-400 sm:block" aria-hidden="true" />
-          <span className="hidden shrink-0 text-[11px] font-medium text-zinc-300 sm:inline">
+          <MapPin className="hidden h-3 w-3 shrink-0 text-zinc-500 sm:block" aria-hidden="true" />
+          <span className="hidden shrink-0 text-[11px] font-medium text-zinc-600 sm:inline">
             Seoul
           </span>
-          <CloudSun className="h-3.5 w-3.5 shrink-0 text-amber-400" aria-hidden="true" />
-          <span className="shrink-0 text-sm font-semibold tabular-nums text-white">
+          <CloudSun className="h-3.5 w-3.5 shrink-0 text-amber-500" aria-hidden="true" />
+          <span className="shrink-0 text-sm font-semibold tabular-nums text-zinc-950">
             {weather.temp}°
           </span>
-          <span className="min-w-0 truncate text-[11px] capitalize text-zinc-300 sm:max-w-[5.5rem] sm:text-xs">
+          <span className="min-w-0 truncate text-[11px] capitalize text-zinc-600 sm:max-w-[5.5rem] sm:text-xs">
             {weather.description}
           </span>
           <ChevronRight
-            className="hidden h-3 w-3 shrink-0 text-zinc-400 sm:block sm:opacity-70 sm:group-hover:text-white"
+            className="hidden h-3 w-3 shrink-0 text-zinc-500 sm:block sm:opacity-70 sm:group-hover:text-zinc-900"
             aria-hidden="true"
           />
           <button
@@ -136,7 +136,7 @@ export function WeatherWidget({ variant = "default" }: WeatherWidgetProps) {
               e.stopPropagation()
               void load()
             }}
-            className="ml-0.5 shrink-0 rounded p-0.5 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+            className="ml-0.5 shrink-0 rounded p-0.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
             aria-label={"날씨 새로고침"}
           >
             <RefreshCw className="h-3 w-3" aria-hidden="true" />

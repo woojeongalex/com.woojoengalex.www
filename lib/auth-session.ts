@@ -30,8 +30,7 @@ export function clearUserSession(): void {
   window.dispatchEvent(new Event("auth-changed"))
 }
 
-/** 네비 표시: 안녕하세요, {닉네임|아이디}님 */
-export function formatUserHonorific(user: UserSession): string {
-  const name = user.nickname?.trim() || user.username.trim()
-  return `안녕하세요, ${name}님`
+/** 인사말에 쓸 표시 이름 (닉네임 우선, 없으면 아이디) */
+export function getUserDisplayName(user: UserSession): string {
+  return user.nickname?.trim() || user.username.trim()
 }
