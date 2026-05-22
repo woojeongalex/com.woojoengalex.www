@@ -10,9 +10,11 @@ async function parseJsonResponse<T>(
   fallbackError: string
 ): Promise<T> {
   const raw = await res.text()
-  let data: T & { error?: string } = {} as T & { error?: string }
+  let data = {} as T & { error?: string }
   try {
-    data = raw ? (JSON.parse(raw) as T & { error?: string }) : ({} as T)
+    if (raw) {
+      data = JSON.parse(raw) as T & { error?: string }
+    }
   } catch {
     throw new UserFacingError(fallbackError)
   }
