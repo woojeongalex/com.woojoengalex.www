@@ -46,9 +46,9 @@ export default function HomePage() {
               <br className="hidden sm:block" />
               그리고 다음 연습을 위한 코칭 피드백까지 제공합니다.
               <br className="hidden sm:block" />
-              추후에는 기타와 피아노 같은 악기 튜닝 기능까지
+              기타·피아노 튜닝과 스피치 코칭까지
               <br className="hidden sm:block" />
-              하나의 서비스로 확장될 수 있도록 설계된 홈 화면입니다.
+              하나의 IUEM 서비스로 연결됩니다.
             </p>
 
             <div className="mt-10 grid gap-4 sm:grid-cols-2">
@@ -106,7 +106,7 @@ export default function HomePage() {
                   <br className="hidden sm:block" />
                   음정 상태와 튜닝 정확도도 확인할 수 있도록
                   <br className="hidden sm:block" />
-                  서비스가 확장될 예정입니다.
+                  음정·튜닝 점수를 확인할 수 있습니다.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2 text-xs text-zinc-600">
                   <span className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1">

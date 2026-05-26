@@ -1,8 +1,4 @@
-import {
-  UserFacingError,
-  UI_ERRORS,
-  apiErrorOrFallback,
-} from "@/lib/user-facing-error"
+import { getMusicJson } from "@/lib/music-api-fetch"
 
 /** FastAPI `GET /api/songs/search` 응답 (Next 프록시 경유) */
 
@@ -27,18 +23,12 @@ export type SongMrSearchPayload = {
 
 export async function fetchSongMrSearch(query: string): Promise<SongMrSearchPayload> {
   const q = query.trim()
-  const res = await fetch(`/api/songs/search?${new URLSearchParams({ q })}`, {
-    cache: "no-store",
-  })
-  const data = (await res.json()) as SongMrSearchPayload & { error?: string }
-  if (!res.ok) {
-    throw new UserFacingError(
-      apiErrorOrFallback(data.error, UI_ERRORS.requestFailed)
-    )
-  }
+  const data = await getMusicJson<SongMrSearchPayload>(
+    `/api/songs/search?${new URLSearchParams({ q })}`
+  )
   return {
-    query: typeof data.query === "string" ? data.query : q,
-    hits: Array.isArray(data.hits) ? data.hits : [],
-    count: typeof data.count === "number" ? data.count : 0,
+    query: data.query ?? q,
+    hits: data.hits ?? [],
+    count: data.count ?? 0,
   }
 }
