@@ -60,7 +60,7 @@ export function SiteHeader() {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className={pianoMenuKeyBlack}>
                   <Link href="/titanic" className="flex w-full cursor-pointer">
-                    LABS
+                    타이타닉
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
