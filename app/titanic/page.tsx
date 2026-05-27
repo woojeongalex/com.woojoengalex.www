@@ -17,6 +17,7 @@ export default function TitanicHomePage() {
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [uploadedCsv, setUploadedCsv] = useState<UploadedCsv | null>(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const formatBytes = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`
@@ -71,7 +72,88 @@ export default function TitanicHomePage() {
 
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-white px-4 py-10 text-zinc-900">
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
+      <div className="mx-auto grid w-full max-w-6xl gap-8 md:grid-cols-[16rem_1fr]">
+        <aside className="sticky top-24 hidden h-fit rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm md:block">
+          <p className="text-xs font-bold tracking-[0.14em] text-zinc-500">LESSON</p>
+          <p className="mt-2 text-lg font-bold text-zinc-950">타이타닉</p>
+          <div className="mt-4 border-t border-zinc-200 pt-4">
+            <p className="text-sm font-semibold text-zinc-900">1. 데이터 수집</p>
+          </div>
+        </aside>
+
+        <div className="flex min-w-0 flex-col gap-8">
+          <div className="flex items-center justify-between md:hidden">
+            <div>
+              <p className="text-xs font-bold tracking-[0.14em] text-zinc-500">LESSON</p>
+              <p className="mt-1 text-lg font-bold text-zinc-950">타이타닉</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-50"
+              aria-label="사이드바 열기"
+            >
+              <span aria-hidden className="text-lg leading-none">
+                ≡
+              </span>
+            </button>
+          </div>
+
+          {sidebarOpen && (
+            <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true">
+              <button
+                type="button"
+                className="absolute inset-0 bg-black/35"
+                onClick={() => setSidebarOpen(false)}
+                aria-label="사이드바 닫기"
+              />
+              <aside className="relative h-full w-[18rem] max-w-[85vw] bg-white p-5 shadow-xl">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-bold tracking-[0.14em] text-zinc-500">
+                      LESSON
+                    </p>
+                    <p className="mt-1 text-lg font-bold text-zinc-950">타이타닉</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSidebarOpen(false)}
+                    className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-50"
+                  >
+                    닫기
+                  </button>
+                </div>
+                <div className="mt-4 border-t border-zinc-200 pt-4">
+                  <p className="text-sm font-semibold text-zinc-900">1. 데이터 수집</p>
+                </div>
+              </aside>
+            </div>
+          )}
+
+          <nav
+            aria-label="타이타닉 서브 메뉴"
+            className="sticky top-24 z-10 -mx-1 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 border-b border-zinc-200 bg-white/95 px-1 py-3 text-xs font-semibold tracking-[0.18em] text-zinc-500 backdrop-blur sm:justify-start sm:text-sm"
+          >
+            {[
+              "ALL",
+              "SYSTEM",
+              "ARCHITECTURE",
+              "AGENT",
+              "BACKEND",
+              "MOBILE",
+              "DEVOPS",
+              "NLP",
+            ].map((label) => (
+              <button
+                key={label}
+                type="button"
+                className="rounded-md px-1 py-1 transition-colors hover:text-zinc-900"
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+
         <section className="text-center">
           <h1 className="text-4xl font-bold sm:text-6xl">타이타닉 홈</h1>
           <p className="mt-3 text-sm text-zinc-600 sm:text-base">
@@ -179,6 +261,7 @@ export default function TitanicHomePage() {
             />
           </div>
         </section>
+        </div>
       </div>
     </main>
   )
