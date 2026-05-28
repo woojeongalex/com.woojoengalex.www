@@ -1,31 +1,18 @@
 "use client"
 
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { ChangeEvent, DragEvent, useRef, useState } from "react"
 
-type UploadMethod = "file-picker" | "drag-and-drop"
-
-interface UploadedCsv {
-  fileName: string
-  fileSize: number
-  method: UploadMethod
-  previewLines: string[]
-}
-
 export default function TitanicHomePage() {
+  const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [uploadedCsv, setUploadedCsv] = useState<UploadedCsv | null>(null)
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  const formatBytes = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  }
-
-  const handleCsvUpload = async (file: File, method: UploadMethod) => {
+  const handleCsvUpload = async (file: File) => {
     const isCsv =
       file.name.toLowerCase().endsWith(".csv") ||
       file.type === "text/csv" ||
@@ -33,30 +20,41 @@ export default function TitanicHomePage() {
 
     if (!isCsv) {
       setError("CSV 파일만 업로드할 수 있습니다.")
-      setUploadedCsv(null)
       return
     }
 
-    const text = await file.text()
-    const previewLines = text
-      .split(/\r?\n/)
-      .filter((line) => line.trim().length > 0)
-      .slice(0, 5)
+    const formData = new FormData()
+    formData.append("file", file)
 
-    setError(null)
-    setUploadedCsv({
-      fileName: file.name,
-      fileSize: file.size,
-      method,
-      previewLines,
-    })
+    try {
+      const rawText = await file.text()
+      const response = await fetch("/api/titanic/james/upload", {
+        method: "POST",
+        body: formData,
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        setError(typeof data?.detail === "string" ? data.detail : "업로드에 실패했습니다.")
+        return
+      }
+
+      setError(null)
+      setUploadedFileName(file.name)
+      sessionStorage.setItem("titanic_uploaded_file_name", file.name)
+      sessionStorage.setItem("titanic_uploaded_csv_text", rawText)
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "업로드 요청 중 오류가 발생했습니다."
+      setError(message)
+      setUploadedFileName(null)
+    }
   }
 
   const handleInputChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
-    await handleCsvUpload(file, "file-picker")
+    await handleCsvUpload(file)
     event.target.value = ""
   }
 
@@ -67,7 +65,7 @@ export default function TitanicHomePage() {
     const file = event.dataTransfer.files?.[0]
     if (!file) return
 
-    await handleCsvUpload(file, "drag-and-drop")
+    await handleCsvUpload(file)
   }
 
   return (
@@ -212,43 +210,6 @@ export default function TitanicHomePage() {
           </section>
         )}
 
-        {uploadedCsv && (
-          <section className="rounded-2xl border border-zinc-200 p-6 shadow-sm">
-            <h2 className="text-xl font-semibold">업로드 결과</h2>
-            <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
-              <div>
-                <dt className="font-medium text-zinc-500">파일명</dt>
-                <dd className="mt-1 break-all text-zinc-900">{uploadedCsv.fileName}</dd>
-              </div>
-              <div>
-                <dt className="font-medium text-zinc-500">크기</dt>
-                <dd className="mt-1 text-zinc-900">{formatBytes(uploadedCsv.fileSize)}</dd>
-              </div>
-              <div>
-                <dt className="font-medium text-zinc-500">업로드 방식</dt>
-                <dd className="mt-1 text-zinc-900">
-                  {uploadedCsv.method === "file-picker"
-                    ? "파일 선택"
-                    : "드래그 앤 드롭"}
-                </dd>
-              </div>
-            </dl>
-
-            <div className="mt-6">
-              <h3 className="text-sm font-medium text-zinc-500">CSV 미리보기 (앞 5줄)</h3>
-              <div className="mt-2 rounded-xl bg-zinc-950 p-4 text-sm text-zinc-100">
-                {uploadedCsv.previewLines.length > 0 ? (
-                  <pre className="overflow-x-auto whitespace-pre-wrap">
-                    {uploadedCsv.previewLines.join("\n")}
-                  </pre>
-                ) : (
-                  <p>미리볼 데이터가 없습니다.</p>
-                )}
-              </div>
-            </div>
-          </section>
-        )}
-
         <section className="rounded-2xl border border-zinc-200 bg-zinc-50 p-6 shadow-sm">
           <div className="flex justify-center">
             <Image
@@ -259,6 +220,21 @@ export default function TitanicHomePage() {
               className="h-auto w-full max-w-3xl"
               priority
             />
+          </div>
+          <div className="mt-6 flex flex-col items-center gap-3">
+            <p className="text-sm text-zinc-600">
+              {uploadedFileName
+                ? `업로드 완료: ${uploadedFileName}`
+                : "CSV 업로드 후 상세페이지로 이동할 수 있습니다."}
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push("/titanic/detail")}
+              disabled={!uploadedFileName}
+              className="rounded-lg border border-zinc-900 bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-300"
+            >
+              상세페이지 이동하기
+            </button>
           </div>
         </section>
         </div>
