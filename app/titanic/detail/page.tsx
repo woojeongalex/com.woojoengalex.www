@@ -3,34 +3,13 @@
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 
-type WalterPassenger = {
-  id: number
-  source_file: string
-  passenger_id: string
-  survived: string
-  pclass: string
-  name: string
-  gender: string
-  age: string
-  sib_sp: string
-  parch: string
-  ticket: string
-  fare: string
-  created_at: string | null
-}
-
-type WalterPassengerPage = {
-  source_file: string | null
-  page: number
-  size: number
-  total: number
-  total_pages: number
-  rows: WalterPassenger[]
-}
+import {
+  fetchWalterPassengers,
+  getUploadedFileName,
+  type WalterPassenger,
+} from "@/lib/titanic-api"
 
 const TABLE_COLUMNS: Array<{ key: keyof WalterPassenger; label: string }> = [
-  { key: "id", label: "id" },
-  { key: "source_file", label: "source_file" },
   { key: "passenger_id", label: "PassengerId" },
   { key: "survived", label: "Survived" },
   { key: "pclass", label: "Pclass" },
@@ -43,67 +22,70 @@ const TABLE_COLUMNS: Array<{ key: keyof WalterPassenger; label: string }> = [
   { key: "fare", label: "Fare" },
 ]
 
+const ROWS_PER_PAGE = 30
+
 export default function TitanicDetailPage() {
-  const ROWS_PER_PAGE = 30
-  const [fileName, setFileName] = useState<string | null>(null)
-  const [data, setData] = useState<WalterPassengerPage | null>(null)
+  const [fileName] = useState<string | null>(() => getUploadedFileName())
+  const [rows, setRows] = useState<WalterPassenger[]>([])
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
-    setFileName(sessionStorage.getItem("titanic_uploaded_file_name"))
-  }, [])
+    setCurrentPage(1)
+  }, [fileName])
 
   useEffect(() => {
+    if (!fileName) {
+      setRows([])
+      setTotal(0)
+      setTotalPages(0)
+      setError("업로드한 CSV 파일 정보가 없습니다. 먼저 업로드 페이지에서 CSV를 올려 주세요.")
+      setLoading(false)
+      return
+    }
+
+    let cancelled = false
+
     const run = async () => {
       setLoading(true)
       setError(null)
       try {
-        const params = new URLSearchParams({
-          page: String(currentPage),
-          size: String(ROWS_PER_PAGE),
+        const page = await fetchWalterPassengers({
+          sourceFile: fileName,
+          page: currentPage,
+          size: ROWS_PER_PAGE,
         })
-        if (fileName) {
-          params.set("source_file", fileName)
-        }
-        const response = await fetch(`/api/titanic/walter/passengers?${params.toString()}`)
-        const payload = (await response.json()) as Partial<WalterPassengerPage> & {
-          detail?: string
-        }
-        if (!response.ok) {
-          throw new Error(payload.detail || "상세 데이터를 불러오지 못했습니다.")
-        }
-        setData({
-          source_file: payload.source_file ?? null,
-          page: Number(payload.page ?? currentPage),
-          size: Number(payload.size ?? ROWS_PER_PAGE),
-          total: Number(payload.total ?? 0),
-          total_pages: Number(payload.total_pages ?? 0),
-          rows: Array.isArray(payload.rows) ? (payload.rows as WalterPassenger[]) : [],
-        })
+        if (cancelled) return
+        setRows(page.rows)
+        setTotal(page.total)
+        setTotalPages(Math.max(1, page.total_pages))
       } catch (err) {
+        if (cancelled) return
         const message = err instanceof Error ? err.message : "상세 데이터를 불러오지 못했습니다."
         setError(message)
-        setData(null)
+        setRows([])
+        setTotal(0)
+        setTotalPages(0)
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
     void run()
-  }, [ROWS_PER_PAGE, currentPage, fileName])
 
-  const totalPages = Math.max(1, data?.total_pages ?? 0)
+    return () => {
+      cancelled = true
+    }
+  }, [currentPage, fileName])
+
   const pageNumbers = useMemo(() => {
     const visibleCount = 10
     const blockStart = Math.floor((currentPage - 1) / visibleCount) * visibleCount + 1
     const blockEnd = Math.min(totalPages, blockStart + visibleCount - 1)
     return Array.from({ length: blockEnd - blockStart + 1 }, (_, idx) => blockStart + idx)
   }, [currentPage, totalPages])
-
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [fileName])
 
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-white px-4 py-10 text-zinc-900">
@@ -112,9 +94,7 @@ export default function TitanicDetailPage() {
           <div>
             <h1 className="text-3xl font-bold sm:text-4xl">타이타닉 CSV 상세</h1>
             <p className="mt-2 text-sm text-zinc-600">
-              {fileName
-                ? `파일: ${fileName}`
-                : "최근 업로드 파일 기준으로 DB 데이터를 표시합니다."}
+              {fileName ? `파일: ${fileName}` : "업로드된 CSV 파일이 없습니다."}
             </p>
           </div>
           <Link
@@ -146,7 +126,7 @@ export default function TitanicDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(data?.rows ?? []).map((row) => (
+                  {rows.map((row) => (
                     <tr key={`${row.id}-${row.passenger_id}`} className="odd:bg-white even:bg-zinc-50">
                       {TABLE_COLUMNS.map((column) => (
                         <td
@@ -165,11 +145,9 @@ export default function TitanicDetailPage() {
               <p className="text-sm text-zinc-600">
                 {loading
                   ? "데이터 로딩 중..."
-                  : `페이지 ${currentPage} / ${totalPages} (페이지당 ${ROWS_PER_PAGE}명, 총 ${
-                      data?.total ?? 0
-                    }명)`}
+                  : `페이지 ${currentPage} / ${totalPages} (페이지당 ${ROWS_PER_PAGE}명, 총 ${total}명)`}
               </p>
-              <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1">
+              <div className="absolute left-1/2 flex -translate-x-1/2 items-center gap-1">
                 <button
                   type="button"
                   onClick={() =>

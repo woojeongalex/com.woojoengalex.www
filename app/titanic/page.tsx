@@ -4,13 +4,15 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { ChangeEvent, DragEvent, useRef, useState } from "react"
 
+import { useAsyncAction } from "@/hooks/use-async-action"
+import { setUploadedFileName, uploadTitanicCsv } from "@/lib/titanic-api"
+
 export default function TitanicHomePage() {
   const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [uploadedFileName, setUploadedFileNameState] = useState<string | null>(null)
+  const { loading, error, run } = useAsyncAction()
 
   const handleCsvUpload = async (file: File) => {
     const isCsv =
@@ -19,152 +21,43 @@ export default function TitanicHomePage() {
       file.type === "application/vnd.ms-excel"
 
     if (!isCsv) {
-      setError("CSV 파일만 업로드할 수 있습니다.")
-      return
+      throw new Error("CSV 파일만 업로드할 수 있습니다.")
     }
 
-    const formData = new FormData()
-    formData.append("file", file)
-
-    try {
-      const rawText = await file.text()
-      const response = await fetch("/api/titanic/james/upload", {
-        method: "POST",
-        body: formData,
-      })
-      const data = await response.json()
-      if (!response.ok) {
-        setError(typeof data?.detail === "string" ? data.detail : "업로드에 실패했습니다.")
-        return
-      }
-
-      setError(null)
-      setUploadedFileName(file.name)
-      sessionStorage.setItem("titanic_uploaded_file_name", file.name)
-      sessionStorage.setItem("titanic_uploaded_csv_text", rawText)
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "업로드 요청 중 오류가 발생했습니다."
-      setError(message)
-      setUploadedFileName(null)
-    }
+    const result = await uploadTitanicCsv(file)
+    setUploadedFileName(result.file_name)
+    setUploadedFileNameState(result.file_name)
   }
 
   const handleInputChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
-
-    await handleCsvUpload(file)
+    await run(() => handleCsvUpload(file), { fallbackError: "업로드에 실패했습니다." })
     event.target.value = ""
   }
 
   const handleDrop = async (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault()
     setIsDragging(false)
-
     const file = event.dataTransfer.files?.[0]
     if (!file) return
-
-    await handleCsvUpload(file)
+    await run(() => handleCsvUpload(file), { fallbackError: "업로드에 실패했습니다." })
   }
 
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-white px-4 py-10 text-zinc-900">
-      <div className="mx-auto grid w-full max-w-6xl gap-8 md:grid-cols-[16rem_1fr]">
-        <aside className="sticky top-24 hidden h-fit rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm md:block">
-          <p className="text-xs font-bold tracking-[0.14em] text-zinc-500">LESSON</p>
-          <p className="mt-2 text-lg font-bold text-zinc-950">타이타닉</p>
-          <div className="mt-4 border-t border-zinc-200 pt-4">
-            <p className="text-sm font-semibold text-zinc-900">1. 데이터 수집</p>
-          </div>
-        </aside>
-
-        <div className="flex min-w-0 flex-col gap-8">
-          <div className="flex items-center justify-between md:hidden">
-            <div>
-              <p className="text-xs font-bold tracking-[0.14em] text-zinc-500">LESSON</p>
-              <p className="mt-1 text-lg font-bold text-zinc-950">타이타닉</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setSidebarOpen(true)}
-              className="inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-50"
-              aria-label="사이드바 열기"
-            >
-              <span aria-hidden className="text-lg leading-none">
-                ≡
-              </span>
-            </button>
-          </div>
-
-          {sidebarOpen && (
-            <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true">
-              <button
-                type="button"
-                className="absolute inset-0 bg-black/35"
-                onClick={() => setSidebarOpen(false)}
-                aria-label="사이드바 닫기"
-              />
-              <aside className="relative h-full w-[18rem] max-w-[85vw] bg-white p-5 shadow-xl">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-bold tracking-[0.14em] text-zinc-500">
-                      LESSON
-                    </p>
-                    <p className="mt-1 text-lg font-bold text-zinc-950">타이타닉</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSidebarOpen(false)}
-                    className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-50"
-                  >
-                    닫기
-                  </button>
-                </div>
-                <div className="mt-4 border-t border-zinc-200 pt-4">
-                  <p className="text-sm font-semibold text-zinc-900">1. 데이터 수집</p>
-                </div>
-              </aside>
-            </div>
-          )}
-
-          <nav
-            aria-label="타이타닉 서브 메뉴"
-            className="sticky top-24 z-10 -mx-1 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 border-b border-zinc-200 bg-white/95 px-1 py-3 text-xs font-semibold tracking-[0.18em] text-zinc-500 backdrop-blur sm:justify-start sm:text-sm"
-          >
-            {[
-              "ALL",
-              "SYSTEM",
-              "ARCHITECTURE",
-              "AGENT",
-              "BACKEND",
-              "MOBILE",
-              "DEVOPS",
-              "NLP",
-            ].map((label) => (
-              <button
-                key={label}
-                type="button"
-                className="rounded-md px-1 py-1 transition-colors hover:text-zinc-900"
-              >
-                {label}
-              </button>
-            ))}
-          </nav>
-
+      <div className="mx-auto w-full max-w-4xl space-y-8">
         <section className="text-center">
-          <h1 className="text-4xl font-bold sm:text-6xl">타이타닉 홈</h1>
+          <h1 className="text-4xl font-bold sm:text-5xl">타이타닉 홈</h1>
           <p className="mt-3 text-sm text-zinc-600 sm:text-base">
-            타이타닉 CSV 파일을 두 가지 방법으로 업로드할 수 있습니다.
+            Titanic CSV를 업로드한 뒤 DB에 저장된 데이터를 상세 페이지에서 확인합니다.
           </p>
         </section>
 
         <section className="grid gap-6 md:grid-cols-2">
           <article className="rounded-2xl border border-zinc-200 p-6 shadow-sm">
-            <h2 className="text-xl font-semibold">방법 1. 파일 선택</h2>
-            <p className="mt-2 text-sm text-zinc-600">
-              버튼을 눌러 로컬의 타이타닉 CSV 파일을 선택하세요.
-            </p>
+            <h2 className="text-xl font-semibold">파일 선택</h2>
+            <p className="mt-2 text-sm text-zinc-600">로컬 CSV 파일을 선택해 업로드합니다.</p>
             <input
               ref={inputRef}
               type="file"
@@ -174,18 +67,17 @@ export default function TitanicHomePage() {
             />
             <button
               type="button"
+              disabled={loading}
               onClick={() => inputRef.current?.click()}
-              className="mt-5 rounded-lg border border-zinc-900 bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+              className="mt-5 rounded-lg border border-zinc-900 bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-400"
             >
-              Titanic CSV 선택하기
+              {loading ? "업로드 중…" : "Titanic CSV 선택하기"}
             </button>
           </article>
 
           <article className="rounded-2xl border border-zinc-200 p-6 shadow-sm">
-            <h2 className="text-xl font-semibold">방법 2. 드래그 앤 드롭</h2>
-            <p className="mt-2 text-sm text-zinc-600">
-              CSV 파일을 아래 영역으로 끌어다 놓아 업로드하세요.
-            </p>
+            <h2 className="text-xl font-semibold">드래그 앤 드롭</h2>
+            <p className="mt-2 text-sm text-zinc-600">CSV 파일을 아래 영역에 놓아 업로드합니다.</p>
             <div
               onDragOver={(event) => {
                 event.preventDefault()
@@ -225,19 +117,18 @@ export default function TitanicHomePage() {
             <p className="text-sm text-zinc-600">
               {uploadedFileName
                 ? `업로드 완료: ${uploadedFileName}`
-                : "CSV 업로드 후 상세페이지로 이동할 수 있습니다."}
+                : "CSV 업로드 후 상세 페이지로 이동할 수 있습니다."}
             </p>
             <button
               type="button"
               onClick={() => router.push("/titanic/detail")}
-              disabled={!uploadedFileName}
+              disabled={!uploadedFileName || loading}
               className="rounded-lg border border-zinc-900 bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-300"
             >
               상세페이지 이동하기
             </button>
           </div>
         </section>
-        </div>
       </div>
     </main>
   )
