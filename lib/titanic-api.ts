@@ -38,13 +38,37 @@ export async function uploadTitanicCsv(file: File): Promise<{ file_name: string;
   const formData = new FormData()
   formData.append("file", file)
 
-  const response = await fetch("/api/titanic/james/upload", { method: "POST", body: formData })
-  const data = await response.json()
-  if (!response.ok) {
-    const detail = typeof data?.detail === "string" ? data.detail : "업로드에 실패했습니다."
-    throw new Error(detail)
+  let response: Response
+  try {
+    response = await fetch("/api/titanic/james/upload", { method: "POST", body: formData })
+  } catch {
+    throw new Error("백엔드 서버에 연결하지 못했습니다. 백엔드(8000)가 실행 중인지 확인해 주세요.")
   }
-  return data as { file_name: string; count: number }
+
+  const raw = await response.text()
+  let data: { file_name?: string; count?: number; detail?: string }
+  try {
+    data = raw ? (JSON.parse(raw) as typeof data) : {}
+  } catch {
+    throw new Error("업로드 응답 형식이 올바르지 않습니다.")
+  }
+
+  if (!response.ok) {
+    const detail = data.detail
+    if (typeof detail === "string") {
+      throw new Error(detail)
+    }
+    if (Array.isArray(detail)) {
+      const first = detail[0] as { msg?: string; loc?: unknown[] } | undefined
+      throw new Error(first?.msg ?? "CSV 형식이 올바르지 않습니다.")
+    }
+    throw new Error("업로드에 실패했습니다.")
+  }
+
+  return {
+    file_name: String(data.file_name ?? file.name),
+    count: Number(data.count ?? 0),
+  }
 }
 
 export async function fetchWalterPassengers(options: {
