@@ -1,16 +1,16 @@
 export type WalterPassenger = {
   id: number
-  source_file: string
-  passenger_id: string
-  survived: string
-  pclass: string
-  name: string
-  gender: string
-  age: string
-  sib_sp: string
-  parch: string
-  ticket: string
-  fare: string
+  source_file: string | null
+  passenger_id: string | null
+  survived: string | null
+  pclass: string | null
+  name: string | null
+  gender: string | null
+  age: string | null
+  sib_sp: string | null
+  parch: string | null
+  ticket: string | null
+  fare: string | null
   created_at: string | null
 }
 

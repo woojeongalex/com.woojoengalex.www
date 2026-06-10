@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { parseFastApiDetail, UI_ERRORS } from "@/lib/user-facing-error"
 
 export const WEATHER_API_BASE =
+  process.env.API_BASE_URL?.replace(/\/$/, "") ??
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
   "http://127.0.0.1:8000"
 
