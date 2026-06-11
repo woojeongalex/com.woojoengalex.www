@@ -1,8 +1,7 @@
 "use client"
 
-import Link from "next/link"
 import { useCallback, useEffect, useState } from "react"
-import { ChevronRight, CloudSun, Loader2, MapPin, RefreshCw } from "lucide-react"
+import { CloudSun, Loader2, MapPin, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { UserFacingError, UI_ERRORS, apiErrorOrFallback } from "@/lib/user-facing-error"
 
@@ -48,16 +47,13 @@ export function WeatherWidget({ variant = "default" }: WeatherWidgetProps) {
   }, [load])
 
   return (
-    <Link
-      href="/weather"
+    <div
       className={cn(
         "group transition-colors",
         compact
-          ? "inline-flex h-9 max-w-[11rem] items-center rounded-lg border border-zinc-300 bg-white px-2 text-zinc-900 shadow-sm hover:border-zinc-400 hover:bg-zinc-50 sm:max-w-none sm:px-2.5"
-          : "block w-full max-w-md rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm hover:border-zinc-300 hover:bg-zinc-50/80"
+          ? "inline-flex h-9 max-w-[11rem] items-center rounded-lg border border-zinc-300 bg-white px-2 text-zinc-900 shadow-sm sm:max-w-none sm:px-2.5"
+          : "block w-full max-w-md rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm"
       )}
-      aria-label={"서울 날씨 — 1주일 예보 보기"}
-      title={compact ? "1주일 예보 보기" : undefined}
     >
       {loading && (
         <span
@@ -125,10 +121,6 @@ export function WeatherWidget({ variant = "default" }: WeatherWidgetProps) {
           <span className="min-w-0 truncate text-[11px] capitalize text-zinc-600 sm:max-w-[5.5rem] sm:text-xs">
             {weather.description}
           </span>
-          <ChevronRight
-            className="hidden h-3 w-3 shrink-0 text-zinc-500 sm:block sm:opacity-70 sm:group-hover:text-zinc-900"
-            aria-hidden="true"
-          />
           <button
             type="button"
             onClick={(e) => {
@@ -176,12 +168,8 @@ export function WeatherWidget({ variant = "default" }: WeatherWidgetProps) {
               </span>
             </span>
           </span>
-          <span className="flex items-center justify-center gap-1 text-xs font-medium text-zinc-500 group-hover:text-zinc-700">
-            1주일 예보 보기
-            <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
-          </span>
         </span>
       )}
-    </Link>
+    </div>
   )
 }
