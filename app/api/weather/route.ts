@@ -17,7 +17,7 @@ function readOpenWeatherKey(): string | null {
     return process.env.OPENWEATHER_API_KEY.trim()
   }
   try {
-    const envPath = join(process.cwd(), "..", "backend", ".env")
+    const envPath = join(process.cwd(), "..", "woojeongai", ".env")
     const content = readFileSync(envPath, "utf8")
     const match = content.match(/^OPENWEATHER_API_KEY=(.+)$/m)
     return match?.[1]?.trim() || null

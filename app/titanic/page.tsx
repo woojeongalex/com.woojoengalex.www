@@ -9,7 +9,6 @@ import { setUploadedFileName, uploadTitanicCsv } from "@/lib/titanic-api"
 
 type ChatMessage = { role: "user" | "assistant"; text: string }
 
-const SMITH_SYSTEM = `당신은 타이타닉호의 선장 에드워드 존 스미스입니다. 1912년 4월 항해 중이며, 타이타닉과 관련된 질문에 선장의 시점으로 답합니다. 한국어로 답하세요.`
 
 export default function TitanicHomePage() {
   const router = useRouter()
@@ -37,13 +36,13 @@ export default function TitanicHomePage() {
     setMessages((prev) => [...prev, { role: "user", text }])
     setChatLoading(true)
     try {
-      const res = await fetch("/api/chat", {
+      const res = await fetch("http://127.0.0.1:8000/titanic/smith/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: `${SMITH_SYSTEM}\n\n사용자: ${text}` }),
+        body: JSON.stringify({ messages: text }),
       })
-      const data = (await res.json()) as { text?: string; error?: string }
-      setMessages((prev) => [...prev, { role: "assistant", text: data.text ?? data.error ?? "오류가 발생했습니다." }])
+      const data = (await res.json()) as { answer?: string; detail?: string; error?: string }
+      setMessages((prev) => [...prev, { role: "assistant", text: data.answer ?? data.detail ?? data.error ?? "오류가 발생했습니다." }])
     } catch {
       setMessages((prev) => [...prev, { role: "assistant", text: "서버 오류가 발생했습니다." }])
     } finally {
