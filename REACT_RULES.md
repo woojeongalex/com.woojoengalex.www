@@ -1,5 +1,7 @@
 # React 코딩 규칙 (IUEM)
 
+> 프론트엔드 허브 → [[alexview/CLAUDE|alexview/CLAUDE.md]]
+
 **진입:** 루트 `.cursorrules` → `docs/DevOPs/README.md` → 본 문서  
 **Cursor 주입:** `.cursor/rules/react-form-state.mdc` (`frontend/**/*.tsx`)  
 **충돌 시 본 문서( docs ) 우선.**
