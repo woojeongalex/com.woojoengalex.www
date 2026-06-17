@@ -41,8 +41,9 @@ export default function TitanicHomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: text }),
       })
-      const data = (await res.json()) as { answer?: string; detail?: string; error?: string }
-      setMessages((prev) => [...prev, { role: "assistant", text: data.answer ?? data.detail ?? data.error ?? "오류가 발생했습니다." }])
+      const data = (await res.json()) as { answer?: string; accuracy?: number; detail?: string; error?: string }
+      const accuracyText = data.accuracy != null ? `\n\n📊 정확도: ${(data.accuracy * 100).toFixed(2)}%` : ""
+      setMessages((prev) => [...prev, { role: "assistant", text: (data.answer ?? data.detail ?? data.error ?? "오류가 발생했습니다.") + accuracyText }])
     } catch {
       setMessages((prev) => [...prev, { role: "assistant", text: "서버 오류가 발생했습니다." }])
     } finally {
