@@ -4,13 +4,14 @@ import { NextResponse } from "next/server"
 import { UI_ERRORS } from "@/lib/user-facing-error"
 import {
   WEATHER_API_BASE,
+  weatherCatchResponse,
   weatherDetailError,
   weatherProxyFailure,
 } from "@/app/api/weather/_lib"
 
 export const runtime = "nodejs"
 
-const BACKEND_FETCH_MS = 4000
+const BACKEND_FETCH_MS = 1500
 
 function readOpenWeatherKey(): string | null {
   if (process.env.OPENWEATHER_API_KEY?.trim()) {
@@ -85,7 +86,7 @@ export async function GET() {
   try {
     const weather = await fetchFromBackend()
     return NextResponse.json(weather)
-  } catch {
+  } catch (backendErr) {
     const apiKey = readOpenWeatherKey()
     if (apiKey) {
       try {
@@ -96,6 +97,6 @@ export async function GET() {
       }
     }
 
-    return weatherProxyFailure(UI_ERRORS.weatherFailed)
+    return weatherCatchResponse(backendErr)
   }
 }

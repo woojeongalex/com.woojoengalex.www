@@ -236,3 +236,9 @@ export default function StaticPage() { ... }
 ---
 
 *세부 규칙 추가 시 본 파일을 업데이트한다.*
+
+
+
+## 11. 다크 모드
+
+[darkmode-sepc.md](./_docs/darkmode-sepc.md)
