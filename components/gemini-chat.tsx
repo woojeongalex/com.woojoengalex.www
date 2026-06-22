@@ -75,9 +75,9 @@ export function GeminiChat({ layout = "default" }: GeminiChatProps) {
       className={`w-full min-w-0 font-sans antialiased ${isSidebar ? "" : "max-w-4xl"}`}
     >
       <div className={isSidebar ? "w-full" : "max-w-2xl"}>
-        <p className="text-sm font-medium text-zinc-500">Gemini</p>
+        <p className="text-xs font-mono tracking-widest uppercase" style={{ color: "#00FF88" }}>Gemini</p>
         <h2
-          className={`font-semibold tracking-tight text-zinc-950 ${
+          className={`font-semibold tracking-tight text-white ${
             isSidebar
               ? "mt-1.5 text-xl sm:text-2xl"
               : "mt-2 text-2xl sm:text-3xl"
@@ -216,13 +216,13 @@ export function GeminiChat({ layout = "default" }: GeminiChatProps) {
       </div>
 
       {error && (
-        <p className="mt-3 text-sm text-red-600" role="status">
+        <p className="mt-3 text-sm text-red-400" role="status">
           {error}
         </p>
       )}
 
       <p
-        className={`max-w-3xl text-xs leading-relaxed text-zinc-500 ${
+        className={`max-w-3xl text-xs leading-relaxed text-zinc-600 ${
           isSidebar ? "mt-2" : "mt-4"
         }`}
       >

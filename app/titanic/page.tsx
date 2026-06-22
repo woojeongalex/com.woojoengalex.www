@@ -7,8 +7,9 @@ import { ChangeEvent, DragEvent, KeyboardEvent, useEffect, useRef, useState } fr
 import { useAsyncAction } from "@/hooks/use-async-action"
 import { setUploadedFileName, uploadTitanicCsv } from "@/lib/titanic-api"
 
-type ChatMessage = { role: "user" | "assistant"; text: string }
+const ACCENT = "#00FF88"
 
+type ChatMessage = { role: "user" | "assistant"; text: string }
 
 export default function TitanicHomePage() {
   const router = useRouter()
@@ -60,11 +61,7 @@ export default function TitanicHomePage() {
       file.name.toLowerCase().endsWith(".csv") ||
       file.type === "text/csv" ||
       file.type === "application/vnd.ms-excel"
-
-    if (!isCsv) {
-      throw new Error("CSV 파일만 업로드할 수 있습니다.")
-    }
-
+    if (!isCsv) throw new Error("CSV 파일만 업로드할 수 있습니다.")
     const result = await uploadTitanicCsv(file)
     setUploadedFileName(result.file_name)
     setUploadedFileNameState(result.file_name)
@@ -86,51 +83,52 @@ export default function TitanicHomePage() {
   }
 
   return (
-    <main className="min-h-[calc(100vh-4rem)] bg-white px-4 py-10 text-zinc-900">
+    <main
+      className="min-h-[calc(100vh-4rem)] px-4 py-10"
+      style={{ background: "#0A0A0A", color: "#e5e7eb" }}
+    >
       <div className="mx-auto w-full max-w-4xl space-y-8">
+        {/* HERO */}
         <section className="text-center">
-          <h1 className="text-4xl font-bold sm:text-5xl">타이타닉 홈</h1>
-          <p className="mt-3 text-sm text-zinc-600 sm:text-base">
+          <p className="text-xs font-mono tracking-widest uppercase" style={{ color: ACCENT }}>
+            // Titanic AI
+          </p>
+          <h1 className="mt-3 text-4xl font-semibold text-white sm:text-5xl">타이타닉 홈</h1>
+          <p className="mt-3 text-sm sm:text-base" style={{ color: "#9ca3af" }}>
             Titanic CSV를 업로드한 뒤 DB에 저장된 데이터를 상세 페이지에서 확인합니다.
           </p>
         </section>
 
+        {/* 업로드 섹션 */}
         <section className="grid gap-6 md:grid-cols-2">
-          <article className="rounded-2xl border border-zinc-200 p-6 shadow-sm">
-            <h2 className="text-xl font-semibold">파일 선택</h2>
-            <p className="mt-2 text-sm text-zinc-600">로컬 CSV 파일을 선택해 업로드합니다.</p>
-            <input
-              ref={inputRef}
-              type="file"
-              accept=".csv,text/csv"
-              className="hidden"
-              onChange={handleInputChange}
-            />
+          <article className="rounded-2xl border p-6" style={{ borderColor: "#1f1f1f", background: "#111111" }}>
+            <h2 className="text-xl font-semibold text-white">파일 선택</h2>
+            <p className="mt-2 text-sm" style={{ color: "#9ca3af" }}>로컬 CSV 파일을 선택해 업로드합니다.</p>
+            <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleInputChange} />
             <button
               type="button"
               disabled={loading}
               onClick={() => inputRef.current?.click()}
-              className="mt-5 rounded-lg border border-zinc-900 bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-400"
+              className="mt-5 rounded-xl px-5 py-3 text-sm font-medium transition-opacity hover:opacity-80 disabled:opacity-40"
+              style={{ background: ACCENT, color: "#0A0A0A" }}
             >
               {loading ? "업로드 중…" : "Titanic CSV 선택하기"}
             </button>
           </article>
 
-          <article className="rounded-2xl border border-zinc-200 p-6 shadow-sm">
-            <h2 className="text-xl font-semibold">드래그 앤 드롭</h2>
-            <p className="mt-2 text-sm text-zinc-600">CSV 파일을 아래 영역에 놓아 업로드합니다.</p>
+          <article className="rounded-2xl border p-6" style={{ borderColor: "#1f1f1f", background: "#111111" }}>
+            <h2 className="text-xl font-semibold text-white">드래그 앤 드롭</h2>
+            <p className="mt-2 text-sm" style={{ color: "#9ca3af" }}>CSV 파일을 아래 영역에 놓아 업로드합니다.</p>
             <div
-              onDragOver={(event) => {
-                event.preventDefault()
-                setIsDragging(true)
-              }}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
-              className={`mt-5 flex min-h-40 items-center justify-center rounded-xl border-2 border-dashed px-4 text-center text-sm transition-colors ${
-                isDragging
-                  ? "border-zinc-900 bg-zinc-100 text-zinc-900"
-                  : "border-zinc-300 bg-zinc-50 text-zinc-500"
-              }`}
+              className="mt-5 flex min-h-40 items-center justify-center rounded-xl border-2 border-dashed px-4 text-center text-sm transition-colors"
+              style={{
+                borderColor: isDragging ? ACCENT : "#2a2a2a",
+                background: isDragging ? "#0d1a12" : "#0d0d0d",
+                color: isDragging ? ACCENT : "#6b7280",
+              }}
             >
               여기에 Titanic CSV 파일을 드래그해서 놓으세요.
             </div>
@@ -138,14 +136,17 @@ export default function TitanicHomePage() {
         </section>
 
         {error && (
-          <section className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <section
+            className="rounded-xl border px-4 py-3 text-sm"
+            style={{ borderColor: "#ef444433", background: "#1a0a0a", color: "#f87171" }}
+          >
             {error}
           </section>
         )}
 
         <section className="grid gap-6 md:grid-cols-2">
           {/* 타이타닉 데이터 배너 */}
-          <article className="rounded-2xl border border-zinc-200 bg-zinc-50 p-6 shadow-sm">
+          <article className="rounded-2xl border p-6" style={{ borderColor: "#1f1f1f", background: "#111111" }}>
             <div className="flex justify-center">
               <Image
                 src="/titanic-illustration.svg"
@@ -157,24 +158,26 @@ export default function TitanicHomePage() {
               />
             </div>
             <div className="mt-4 flex flex-col items-center gap-3">
-              <p className="text-sm text-zinc-600">
-                {uploadedFileName
-                  ? `업로드 완료: ${uploadedFileName}`
-                  : "CSV 업로드 후 상세 페이지로 이동할 수 있습니다."}
+              <p className="text-sm font-mono" style={{ color: uploadedFileName ? ACCENT : "#6b7280" }}>
+                {uploadedFileName ? `✓ 업로드 완료: ${uploadedFileName}` : "CSV 업로드 후 상세 페이지로 이동할 수 있습니다."}
               </p>
               <button
                 type="button"
                 onClick={() => router.push("/titanic/detail")}
                 disabled={!uploadedFileName || loading}
-                className="rounded-lg border border-zinc-900 bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-300"
+                className="rounded-xl px-5 py-3 text-sm font-medium transition-opacity hover:opacity-80 disabled:opacity-30"
+                style={{ background: ACCENT, color: "#0A0A0A" }}
               >
                 상세페이지 이동하기
               </button>
             </div>
           </article>
 
-          {/* 스미스 선장 배너 / 채팅 */}
-          <article className="flex flex-col rounded-2xl border border-zinc-200 bg-zinc-50 shadow-sm overflow-hidden">
+          {/* 스미스 선장 채팅 */}
+          <article
+            className="flex flex-col rounded-2xl border overflow-hidden"
+            style={{ borderColor: "#1f1f1f", background: "#111111" }}
+          >
             {!chatOpen ? (
               <div className="flex flex-1 flex-col items-center justify-center p-6 gap-3">
                 <div className="flex h-[180px] w-full items-center justify-center">
@@ -246,24 +249,29 @@ export default function TitanicHomePage() {
                     <line x1="317" y1="168" x2="317" y2="165" stroke="#c8a96e" strokeWidth="1.5"/>
                   </svg>
                 </div>
-                <h2 className="text-lg font-semibold text-zinc-800">스미스 선장과의 대화</h2>
-                <p className="text-center text-sm text-zinc-500">타이타닉의 선장 에드워드 스미스와 대화해보세요.</p>
+                <h2 className="text-lg font-semibold text-white">스미스 선장과의 대화</h2>
+                <p className="text-center text-sm" style={{ color: "#9ca3af" }}>타이타닉의 선장 에드워드 스미스와 대화해보세요.</p>
                 <button
                   type="button"
                   onClick={() => setChatOpen(true)}
-                  className="rounded-lg border border-zinc-900 bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+                  className="rounded-xl px-5 py-3 text-sm font-medium transition-opacity hover:opacity-80"
+                  style={{ background: ACCENT, color: "#0A0A0A" }}
                 >
                   대화 시작하기
                 </button>
               </div>
             ) : (
               <div className="flex flex-col h-full">
-                <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 bg-zinc-900">
-                  <span className="text-sm font-semibold text-white">⚓ 스미스 선장과의 대화</span>
+                <div
+                  className="flex items-center justify-between border-b px-4 py-3"
+                  style={{ borderColor: "#1f1f1f", background: "#0d0d0d" }}
+                >
+                  <span className="text-sm font-semibold" style={{ color: ACCENT }}>⚓ 스미스 선장과의 대화</span>
                   <button
                     type="button"
                     onClick={() => setChatOpen(false)}
-                    className="text-zinc-400 hover:text-white text-xs"
+                    className="text-xs transition-colors"
+                    style={{ color: "#6b7280" }}
                   >
                     닫기
                   </button>
@@ -272,11 +280,12 @@ export default function TitanicHomePage() {
                   {messages.map((msg, i) => (
                     <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                       <div
-                        className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
+                        className="max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed"
+                        style={
                           msg.role === "user"
-                            ? "bg-zinc-900 text-white rounded-br-sm"
-                            : "bg-white border border-zinc-200 text-zinc-800 rounded-bl-sm"
-                        }`}
+                            ? { background: ACCENT, color: "#0A0A0A", borderRadius: "1rem 1rem 0.25rem 1rem" }
+                            : { background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#d1d5db", borderRadius: "1rem 1rem 1rem 0.25rem" }
+                        }
                       >
                         {msg.text}
                       </div>
@@ -284,14 +293,17 @@ export default function TitanicHomePage() {
                   ))}
                   {chatLoading && (
                     <div className="flex justify-start">
-                      <div className="bg-white border border-zinc-200 rounded-2xl rounded-bl-sm px-3 py-2 text-sm text-zinc-400">
-                        입력 중…
+                      <div
+                        className="rounded-2xl px-3 py-2 text-sm font-mono"
+                        style={{ background: "#1a1a1a", color: ACCENT }}
+                      >
+                        ▋
                       </div>
                     </div>
                   )}
                   <div ref={chatEndRef} />
                 </div>
-                <div className="border-t border-zinc-200 p-3 flex gap-2">
+                <div className="border-t p-3 flex gap-2" style={{ borderColor: "#1f1f1f" }}>
                   <input
                     type="text"
                     value={input}
@@ -299,13 +311,15 @@ export default function TitanicHomePage() {
                     onKeyDown={handleChatKey}
                     placeholder="선장에게 질문하세요…"
                     disabled={chatLoading}
-                    className="flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900 disabled:bg-zinc-100"
+                    className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none"
+                    style={{ background: "#0d0d0d", borderColor: "#2a2a2a", color: "#e5e7eb" }}
                   />
                   <button
                     type="button"
                     onClick={sendMessage}
                     disabled={chatLoading || !input.trim()}
-                    className="rounded-lg bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:bg-zinc-300"
+                    className="rounded-lg px-3 py-2 text-sm font-medium transition-opacity hover:opacity-80 disabled:opacity-40"
+                    style={{ background: ACCENT, color: "#0A0A0A" }}
                   >
                     전송
                   </button>
