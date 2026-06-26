@@ -12,6 +12,7 @@ import {
   StopCircle,
   Waves,
 } from "lucide-react"
+import { RecordingVisualizer } from "@/components/recording-visualizer"
 import { VOCAL_DROPZONE_COPY } from "@/components/media-analysis-dropzone"
 import { PageBackButton } from "@/components/page-back-button"
 import { VocalVideoDropzone } from "@/components/vocal-video-dropzone"
@@ -43,6 +44,110 @@ const EMPTY_SONG_FIND: SongFindState = {
   hits: [],
 }
 
+// ── Gemini 코칭 패널 ──────────────────────────────────────────────────────────
+type ChatMsg = { role: "user" | "assistant"; content: string }
+
+function GeminiCoachPanel({ context }: { context: string }) {
+  const [messages, setMessages] = useState<ChatMsg[]>([])
+  const [input, setInput] = useState("")
+  const [loading, setLoading] = useState(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  const send = async (text?: string) => {
+    const q = (text ?? input).trim()
+    if (!q || loading) return
+    setInput("")
+    setLoading(true)
+    const newMsg: ChatMsg = { role: "user", content: q }
+    setMessages((prev) => [...prev, newMsg])
+
+    try {
+      const res = await fetch("/api/gemini/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: `${context}\n\n${q}` }),
+      })
+      const data = (await res.json()) as { reply?: string }
+      if (data.reply?.trim()) {
+        setMessages((prev) => [...prev, { role: "assistant", content: data.reply!.trim() }])
+      }
+    } catch {
+      // silent
+    } finally {
+      setLoading(false)
+      const el = scrollRef.current
+      if (el) el.scrollTop = el.scrollHeight
+    }
+  }
+
+  return (
+    <article className="rounded-3xl border border-border bg-card overflow-hidden">
+      <div className="flex items-center gap-2 border-b border-border px-5 py-3">
+        <span className="text-xs font-mono tracking-widest" style={{ color: ACCENT }}>GEMINI</span>
+        <span className="text-sm font-semibold">AI 보컬 코치</span>
+      </div>
+
+      <div
+        ref={scrollRef}
+        className="min-h-[5rem] max-h-52 overflow-y-auto px-4 py-3 space-y-2 text-sm"
+      >
+        {messages.length === 0 && !loading && (
+          <p className="text-xs text-muted-foreground">분석 결과를 바탕으로 Gemini에게 코칭을 요청해 보세요.</p>
+        )}
+        {messages.map((m, i) => (
+          <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+            <p
+              className={`max-w-[90%] rounded-xl px-3 py-2 text-sm leading-relaxed ${
+                m.role === "user" ? "bg-muted text-foreground" : "text-muted-foreground"
+              }`}
+            >
+              {m.content}
+            </p>
+          </div>
+        ))}
+        {loading && <p className="text-xs text-muted-foreground animate-pulse">응답 작성 중…</p>}
+      </div>
+
+      {messages.length === 0 && (
+        <div className="flex flex-wrap gap-2 px-4 pb-3">
+          {["개선 방법 알려줘", "다음 연습 추천해줘", "점수 해석해줘"].map((q) => (
+            <button
+              key={q}
+              type="button"
+              onClick={() => void send(q)}
+              className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted"
+            >
+              {q}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 border-t border-border px-3 py-2">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") void send() }}
+          placeholder="Gemini에게 물어보세요…"
+          className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
+          disabled={loading}
+        />
+        <button
+          type="button"
+          onClick={() => void send()}
+          disabled={loading || !input.trim()}
+          className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-80 disabled:opacity-40"
+          style={{ background: ACCENT, color: "#0A0A0A" }}
+        >
+          전송
+        </button>
+      </div>
+    </article>
+  )
+}
+
+// ── 메인 페이지 ───────────────────────────────────────────────────────────────
 export default function AnalyzePage() {
   const [songFind, setSongFind] = useState<SongFindState>(EMPTY_SONG_FIND)
   const [searchLoading, setSearchLoading] = useState(false)
@@ -101,7 +206,7 @@ export default function AnalyzePage() {
       setStatusMessage(
         payload.count === 0
           ? "일치하는 노래·MR이 없습니다. 다른 제목으로 검색해 주세요."
-          : `검색 결과 ${payload.count}건이 저장되었습니다. MR을 사용할 곡을 눌러 선택해 주세요.`
+          : `검색 결과 ${payload.count}건. MR을 사용할 곡을 눌러 선택해 주세요.`
       )
     } catch (err) {
       setStatusMessage(err instanceof UserFacingError ? err.message : UI_ERRORS.requestFailed)
@@ -174,11 +279,11 @@ export default function AnalyzePage() {
     await persistVocalEvaluationToNeon(analysis, "mic")
   }
 
-  const handleVideoAnalysis = async (result: VocalAnalysisResult) => {
+  const handleVideoAnalysis = async (res: VocalAnalysisResult) => {
     setInputSource("video")
     setRecordingState("done")
-    setAnalysisResult(result)
-    await persistVocalEvaluationToNeon(result, "video")
+    setAnalysisResult(res)
+    await persistVocalEvaluationToNeon(res, "video")
   }
 
   const clearVideoInput = () => {
@@ -189,6 +294,11 @@ export default function AnalyzePage() {
     }
   }
 
+  // Gemini 컨텍스트 — 분석 결과 있을 때만 활성화
+  const geminiContext = analysisResult
+    ? `[보컬 분석 결과] 음정 정확도: ${result.pitchScore}%, 박자 정확도: ${result.rhythmScore}%, AI 등급: ${result.vocalGrade}. 요약: ${result.summary}. 선택한 곡: ${selectedSong?.title ?? "미선택"}`
+    : ""
+
   return (
     <main className="min-h-[calc(100vh-4rem)] min-w-0 overflow-x-hidden bg-background px-4 py-8 text-foreground sm:py-10">
       <div className="mx-auto flex w-full min-w-0 max-w-6xl flex-col gap-6 sm:gap-8">
@@ -197,7 +307,7 @@ export default function AnalyzePage() {
         {/* HERO */}
         <section className="rounded-2xl border border-border bg-muted/40 px-4 py-8 dark:bg-[#0d0d0d] sm:rounded-[2rem] sm:px-6 sm:py-10 md:px-10">
           <p className="text-xs font-mono tracking-widest uppercase" style={{ color: ACCENT }}>
-            // Analyze Session
+            // Vocal Analyze
           </p>
           <h1 className="mt-4 text-2xl font-semibold leading-snug tracking-tight sm:text-4xl lg:text-5xl">
             <span className="block">노래 찾기(MR), 마이크·영상 입력,</span>
@@ -211,7 +321,7 @@ export default function AnalyzePage() {
 
         <section className="grid min-w-0 gap-6 lg:grid-cols-2 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
           <div className="space-y-6">
-            {/* STEP 1 */}
+            {/* STEP 1 — 노래 찾기 */}
             <article className="rounded-3xl border border-border bg-card p-6">
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-muted p-3">
@@ -266,13 +376,9 @@ export default function AnalyzePage() {
                         type="button"
                         onClick={() => pickSong(song)}
                         className="rounded-2xl border p-4 text-left transition-colors"
-                        style={{
-                          borderColor: active ? ACCENT + "88" : undefined,
-                          background: active ? "#0d1a12" : undefined,
-                        }}
-                        data-active={active}
+                        style={active ? { borderColor: ACCENT + "88", background: "#0d1a12" } : undefined}
                       >
-                        <p className="text-base font-semibold" style={{ color: active ? "#ffffff" : undefined }}>{song.title}</p>
+                        <p className="text-base font-semibold" style={{ color: active ? "#fff" : undefined }}>{song.title}</p>
                         <p className="mt-1 text-sm text-muted-foreground">{song.artist}</p>
                         <div className="mt-4 space-y-1 text-xs text-muted-foreground">
                           <p>BPM {song.bpm}</p>
@@ -290,7 +396,7 @@ export default function AnalyzePage() {
               )}
             </article>
 
-            {/* STEP 2 */}
+            {/* STEP 2 — 마이크·영상 */}
             <article className="rounded-3xl border border-border bg-card p-6">
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-muted p-3">
@@ -306,6 +412,12 @@ export default function AnalyzePage() {
 
               <div className="mt-6 rounded-2xl border border-border bg-muted/40 p-5 dark:bg-[#0d0d0d]">
                 <p className="text-sm font-medium">마이크로 직접 부르기</p>
+
+                {/* 파형 비주얼라이저 */}
+                <div className="mt-3">
+                  <RecordingVisualizer active={recordingState === "recording"} />
+                </div>
+
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                   <button
                     type="button"
@@ -350,7 +462,7 @@ export default function AnalyzePage() {
               </div>
             </article>
 
-            {/* STEP 3 */}
+            {/* STEP 3 — 분석 결과 */}
             <article className="rounded-3xl border border-border bg-card p-6">
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-muted p-3">
@@ -366,7 +478,7 @@ export default function AnalyzePage() {
                 <ResultCard title="음정 정확도" value={`${result.pitchScore}%`} description="불안정 구간 자동 감지" />
                 <ResultCard title="박자 정확도" value={`${result.rhythmScore}%`} description="빠른/느린 구간 시각화" />
                 <ResultCard
-                  title="AI 피드백"
+                  title="AI 등급"
                   value={result.vocalGrade}
                   description={analysisResult ? result.summary : "호흡과 발성 개선 제안"}
                 />
@@ -382,7 +494,7 @@ export default function AnalyzePage() {
                     {selectedSong?.title ?? "MR 미선택"}
                   </span>
                   {analysisResult?.fileName ? ` · 입력: ${analysisResult.fileName}` : ""}
-                  {selectedSong ? `의 원곡 BPM·키를 기준으로 ` : " — MR을 선택하면 "}
+                  {selectedSong ? "의 원곡 BPM·키를 기준으로 " : " — MR을 선택하면 "}
                   {inputSource === "video" ? "영상·음원" : "마이크"} 보컬과 비교합니다.
                   {analysisResult ? ` ${result.summary}` : ""}
                 </p>
@@ -405,7 +517,7 @@ export default function AnalyzePage() {
                   </div>
                   <dl className="mt-6 space-y-4 text-sm">
                     {[
-                      { label: "DB 기록 id", value: selectedSong.id, mono: true },
+                      { label: "DB id", value: selectedSong.id, mono: true },
                       { label: "BPM", value: selectedSong.bpm },
                       { label: "Key", value: selectedSong.song_key },
                       { label: "상태", value: inputLabel },
@@ -424,11 +536,23 @@ export default function AnalyzePage() {
               )}
             </article>
 
-            {/* API 연결 배너 — 항상 다크(그린 테마) */}
-            <article
-              className="rounded-3xl border p-6"
-              style={{ borderColor: ACCENT + "33", background: "#0d1a12" }}
-            >
+            {/* Gemini 코칭 — 분석 완료 후 활성화 */}
+            {analysisResult ? (
+              <GeminiCoachPanel context={geminiContext} />
+            ) : (
+              <article className="rounded-3xl border border-border bg-card p-6">
+                <div className="flex items-center gap-2 text-sm font-medium" style={{ color: ACCENT }}>
+                  <Sparkles className="h-4 w-4" aria-hidden="true" />
+                  GEMINI AI 코치
+                </div>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                  분석이 완료되면 결과를 바탕으로 Gemini에게 개선 방법, 다음 연습 추천 등을 질문할 수 있습니다.
+                </p>
+              </article>
+            )}
+
+            {/* API 배너 */}
+            <article className="rounded-3xl border p-6" style={{ borderColor: ACCENT + "33", background: "#0d1a12" }}>
               <div className="flex items-center gap-2 text-sm font-medium" style={{ color: ACCENT }}>
                 <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                 백엔드 API 연결 배너
@@ -439,37 +563,7 @@ export default function AnalyzePage() {
               <div className="mt-6 space-y-3 text-sm">
                 <ApiRow label="MR 검색·DB 저장" value={`${apiBaseUrl}/api/songs/search?q=`} />
                 <ApiRow label="보컬 분석 결과 저장" value={`${apiBaseUrl}/api/music/sing-evaluation`} />
-                <ApiRow label="곡 목록 조회" value={`${apiBaseUrl}/songs`} />
-                <ApiRow label="음원 분석 요청" value={`${apiBaseUrl}/analysis/songs/:songId`} />
                 <ApiRow label="녹음 업로드" value={`${apiBaseUrl}/analysis/recordings`} />
-                <ApiRow label="영상·음원 업로드" value={`${apiBaseUrl}/analysis/media-upload`} />
-                <ApiRow label="결과 조회" value={`${apiBaseUrl}/analysis/results/:resultId`} />
-              </div>
-            </article>
-
-            {/* 추천 배너 */}
-            <article className="rounded-3xl border border-border bg-card p-6">
-              <div className="flex items-center gap-2 text-sm font-medium" style={{ color: ACCENT }}>
-                <Sparkles className="h-4 w-4" aria-hidden="true" />
-                추천 배너
-              </div>
-              <h2 className="mt-3 text-xl font-semibold">
-                분석 결과를 바탕으로 추천 장르와 노래를 제안합니다.
-              </h2>
-              <p className="mt-4 text-sm leading-6 text-muted-foreground">
-                음정 안정성, 박자 정확도, 발성 패턴을 기반으로 잘 맞는 장르와 다음에 도전하면 좋은 추천 곡을 안내합니다.
-              </p>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                {[
-                  { label: "추천 장르", value: "발라드, 뮤지컬 넘버" },
-                  { label: "추천 곡", value: "밤편지, Defying Gravity" },
-                ].map(({ label, value }) => (
-                  <div key={label} className="rounded-2xl border border-border bg-muted/40 p-4 dark:bg-[#0d0d0d]">
-                    <p className="text-xs font-mono uppercase tracking-wide text-muted-foreground">Recommendation</p>
-                    <p className="mt-2 text-sm font-semibold">{label}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{value}</p>
-                  </div>
-                ))}
               </div>
             </article>
           </aside>

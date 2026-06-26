@@ -53,7 +53,8 @@ const ACCENT = "#00FF88"
 
 function TerminalWidget() {
   const [visibleCount, setVisibleCount] = useState(0)
-  const bottomRef = useRef<HTMLDivElement>(null)
+  // ref on the scrollable container itself — never use scrollIntoView (오염 방지)
+  const logRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (visibleCount >= LOG_LINES.length) return
@@ -62,7 +63,10 @@ function TerminalWidget() {
   }, [visibleCount])
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+    const el = logRef.current
+    if (!el) return
+    // container 내부 스크롤만 이동, window 스크롤 건드리지 않음
+    el.scrollTop = el.scrollHeight
   }, [visibleCount])
 
   return (
@@ -70,8 +74,9 @@ function TerminalWidget() {
       className="w-full rounded-2xl border overflow-hidden"
       style={{ borderColor: "#1f1f1f", background: "#0d0d0d" }}
     >
+      {/* 타이틀 바 — 로그 영역과 DOM 분리 */}
       <div
-        className="flex items-center gap-2 px-4 py-3 border-b"
+        className="flex shrink-0 items-center gap-2 px-4 py-3 border-b"
         style={{ borderColor: "#1f1f1f", background: "#111111" }}
       >
         <span className="h-3 w-3 rounded-full bg-red-500/70" />
@@ -86,11 +91,16 @@ function TerminalWidget() {
           style={{ color: ACCENT }}
         />
       </div>
-      <div className="h-56 overflow-y-auto px-4 py-3 font-mono text-xs leading-6">
-        {LOG_LINES.slice(0, visibleCount).map((line, i) => (
-          <div key={i} className="flex gap-3">
-            <span style={{ color: "#444" }}>{line.time}</span>
+      {/* 로그 본문 — 이 div 안에서만 스크롤, 외부 누출 없음 */}
+      <div
+        ref={logRef}
+        className="h-56 overflow-y-auto overflow-x-hidden px-4 py-3 font-mono text-xs leading-6"
+      >
+        {LOG_LINES.slice(0, visibleCount).map((line) => (
+          <div key={line.time} className="flex gap-3">
+            <span className="shrink-0" style={{ color: "#444" }}>{line.time}</span>
             <span
+              className="shrink-0"
               style={{
                 color:
                   line.level === "OK"
@@ -103,15 +113,12 @@ function TerminalWidget() {
             >
               [{line.level}]
             </span>
-            <span style={{ color: "#d1d5db" }}>{line.msg}</span>
+            <span className="min-w-0 break-all" style={{ color: "#d1d5db" }}>{line.msg}</span>
           </div>
         ))}
         {visibleCount < LOG_LINES.length && (
-          <span className="animate-pulse" style={{ color: ACCENT }}>
-            ▋
-          </span>
+          <span className="animate-pulse" style={{ color: ACCENT }}>▋</span>
         )}
-        <div ref={bottomRef} />
       </div>
     </div>
   )

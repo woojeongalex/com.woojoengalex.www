@@ -83,20 +83,29 @@ async function fetchFromBackend() {
 }
 
 export async function GET() {
+  const apiKey = readOpenWeatherKey()
+
+  if (apiKey) {
+    // OWM과 백엔드를 동시에 시도 — 먼저 성공한 것 반환
+    const [backendResult, owmResult] = await Promise.allSettled([
+      fetchFromBackend(),
+      fetchOpenWeatherDirect(apiKey),
+    ])
+
+    if (backendResult.status === "fulfilled") {
+      return NextResponse.json(backendResult.value)
+    }
+    if (owmResult.status === "fulfilled") {
+      return NextResponse.json(owmResult.value)
+    }
+    return weatherProxyFailure(UI_ERRORS.weatherFailed, 502)
+  }
+
+  // API 키 없으면 백엔드만 시도
   try {
     const weather = await fetchFromBackend()
     return NextResponse.json(weather)
-  } catch (backendErr) {
-    const apiKey = readOpenWeatherKey()
-    if (apiKey) {
-      try {
-        const weather = await fetchOpenWeatherDirect(apiKey)
-        return NextResponse.json(weather)
-      } catch {
-        return weatherProxyFailure(UI_ERRORS.weatherFailed, 502)
-      }
-    }
-
-    return weatherCatchResponse(backendErr)
+  } catch (e) {
+    return weatherCatchResponse(e)
   }
 }
