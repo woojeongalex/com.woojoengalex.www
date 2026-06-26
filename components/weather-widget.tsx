@@ -78,11 +78,20 @@ export function WeatherWidget({ variant = "default" }: WeatherWidgetProps) {
         <span
           className={cn(
             "flex items-center",
-            compact ? "gap-1 px-0.5 text-xs text-red-600" : "flex-col gap-2 py-2 text-center text-red-600"
+            compact
+              ? "gap-1.5 px-1 text-xs text-zinc-400"
+              : "flex-col gap-2 py-2 text-center text-zinc-500"
           )}
         >
-          <span className={compact ? "truncate" : "text-sm"}>
-            {compact ? "날씨 오류" : error}
+          <CloudSun
+            className={cn(
+              "shrink-0 text-zinc-400",
+              compact ? "h-3.5 w-3.5" : "h-6 w-6"
+            )}
+            aria-hidden="true"
+          />
+          <span className={compact ? "hidden text-[11px] sm:inline" : "text-sm"}>
+            {compact ? "Weather Cloud" : error}
           </span>
           <button
             type="button"
@@ -92,12 +101,10 @@ export function WeatherWidget({ variant = "default" }: WeatherWidgetProps) {
               void load()
             }}
             className={cn(
-              "font-medium underline-offset-2 hover:underline",
-              compact
-                ? "shrink-0 rounded p-0.5 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
-                : "text-xs text-zinc-600"
+              "shrink-0 rounded p-0.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600",
+              !compact && "text-xs text-zinc-500 underline-offset-2 hover:underline"
             )}
-            aria-label={"다시 시도"}
+            aria-label="다시 시도"
           >
             {compact ? (
               <RefreshCw className="h-3 w-3" aria-hidden="true" />

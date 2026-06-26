@@ -58,20 +58,17 @@ export default function SpeechPage() {
   }
 
   return (
-    <main
-      className="min-h-[calc(100vh-4rem)] px-4 py-8 sm:px-6"
-      style={{ background: "#0A0A0A", color: "#e5e7eb" }}
-    >
+    <main className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8 text-foreground sm:px-6">
       <div className="mx-auto max-w-3xl">
         <PageBackButton />
 
         {/* HERO */}
-        <section className="mt-6 rounded-2xl border px-6 py-8" style={{ borderColor: "#1f1f1f", background: "#0d0d0d" }}>
+        <section className="mt-6 rounded-2xl border border-border bg-muted/40 px-6 py-8 dark:bg-[#0d0d0d]">
           <p className="text-xs font-mono tracking-widest uppercase" style={{ color: ACCENT }}>
             // Speech Coaching
           </p>
-          <h1 className="mt-3 text-3xl font-semibold text-white">스피치 코칭</h1>
-          <p className="mt-2 text-sm" style={{ color: "#9ca3af" }}>
+          <h1 className="mt-3 text-3xl font-semibold">스피치 코칭</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             발표·면접·일상 대화 연습 후 AI 말하기 피드백을 받습니다.
           </p>
         </section>
@@ -91,23 +88,25 @@ export default function SpeechPage() {
                   setStatus(`「${topic.label}」 주제 선택됨.`)
                 }}
                 className="rounded-xl border p-4 text-left text-sm transition-colors"
-                style={{
-                  borderColor: active ? ACCENT + "88" : "#1f1f1f",
-                  background: active ? "#0d1a12" : "#111111",
-                }}
+                style={
+                  active
+                    ? { borderColor: ACCENT + "88", background: "#0d1a12" }
+                    : undefined
+                }
+                data-active={active}
               >
-                <p className="font-semibold text-white">{topic.label}</p>
-                <p className="mt-1 text-xs" style={{ color: active ? "#9ca3af" : "#6b7280" }}>
-                  {topic.description}
+                <p className="font-semibold" style={{ color: active ? "#ffffff" : undefined }}>
+                  {topic.label}
                 </p>
+                <p className="mt-1 text-xs text-muted-foreground">{topic.description}</p>
               </button>
             )
           })}
         </section>
 
         {/* 녹음 컨트롤 */}
-        <section className="mt-6 rounded-2xl border p-5" style={{ borderColor: "#1f1f1f", background: "#111111" }}>
-          <p className="mb-4 text-sm font-medium text-white">마이크 녹음</p>
+        <section className="mt-6 rounded-2xl border border-border bg-card p-5">
+          <p className="mb-4 text-sm font-medium">마이크 녹음</p>
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
@@ -123,21 +122,23 @@ export default function SpeechPage() {
               type="button"
               disabled={mic.recording !== "recording" || loading}
               onClick={handleStop}
-              className="inline-flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-medium transition-colors disabled:opacity-40"
-              style={{ borderColor: "#2a2a2a", color: "#9ca3af" }}
+              className="inline-flex items-center gap-2 rounded-xl border border-border px-5 py-3 text-sm font-medium text-muted-foreground transition-colors disabled:opacity-40"
             >
               <StopCircle className="h-4 w-4" aria-hidden />
               멈추고 분석
             </button>
           </div>
-          <p className="mt-4 text-sm font-mono" style={{ color: "#9ca3af" }} role="status">
+          <p className="mt-4 text-sm font-mono text-muted-foreground" role="status">
             {error ?? success ?? status}
           </p>
         </section>
 
-        {/* 결과 */}
+        {/* 결과 — 항상 다크(그린 악센트 정체성) */}
         {result && (
-          <section className="mt-6 rounded-2xl border p-6" style={{ borderColor: ACCENT + "33", background: "#0d1a12" }}>
+          <section
+            className="mt-6 rounded-2xl border p-6"
+            style={{ borderColor: ACCENT + "33", background: "#0d1a12" }}
+          >
             <div className="flex items-center gap-2 text-sm font-medium" style={{ color: ACCENT }}>
               <ListChecks className="h-4 w-4" aria-hidden />
               AI 피드백
@@ -148,22 +149,26 @@ export default function SpeechPage() {
                 { label: "속도", value: result.paceScore },
                 { label: "톤", value: result.toneScore },
               ].map(({ label, value }) => (
-                <div key={label} className="rounded-xl border p-4" style={{ borderColor: "#1f1f1f", background: "#0d0d0d" }}>
+                <div
+                  key={label}
+                  className="rounded-xl border p-4"
+                  style={{ borderColor: "#1f1f1f", background: "#0d0d0d" }}
+                >
                   <p className="text-2xl font-semibold text-white">{value}</p>
-                  <p className="mt-1 text-xs" style={{ color: "#6b7280" }}>{label}</p>
+                  <p className="mt-1 text-xs text-white/50">{label}</p>
                 </div>
               ))}
             </div>
-            <p className="mt-5 text-sm leading-7" style={{ color: "#d1d5db" }}>{result.summary}</p>
+            <p className="mt-5 text-sm leading-7 text-white/80">{result.summary}</p>
             <ul className="mt-4 space-y-2">
               {result.feedbackPoints.map((point) => (
-                <li key={point} className="flex items-start gap-2 text-sm" style={{ color: "#9ca3af" }}>
+                <li key={point} className="flex items-start gap-2 text-sm text-white/60">
                   <span style={{ color: ACCENT }}>›</span>
                   {point}
                 </li>
               ))}
             </ul>
-            <p className="mt-4 text-xs font-mono" style={{ color: "#4b5563" }}>{mic.durationSec}초 녹음 기준</p>
+            <p className="mt-4 text-xs font-mono text-white/30">{mic.durationSec}초 녹음 기준</p>
           </section>
         )}
       </div>

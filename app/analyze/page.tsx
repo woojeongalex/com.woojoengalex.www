@@ -190,26 +190,20 @@ export default function AnalyzePage() {
   }
 
   return (
-    <main
-      className="min-h-[calc(100vh-4rem)] min-w-0 overflow-x-hidden px-4 py-8 sm:py-10"
-      style={{ background: "#0A0A0A", color: "#e5e7eb" }}
-    >
+    <main className="min-h-[calc(100vh-4rem)] min-w-0 overflow-x-hidden bg-background px-4 py-8 text-foreground sm:py-10">
       <div className="mx-auto flex w-full min-w-0 max-w-6xl flex-col gap-6 sm:gap-8">
         <PageBackButton />
 
         {/* HERO */}
-        <section
-          className="rounded-2xl border px-4 py-8 sm:rounded-[2rem] sm:px-6 sm:py-10 md:px-10"
-          style={{ borderColor: "#1f1f1f", background: "#0d0d0d" }}
-        >
+        <section className="rounded-2xl border border-border bg-muted/40 px-4 py-8 dark:bg-[#0d0d0d] sm:rounded-[2rem] sm:px-6 sm:py-10 md:px-10">
           <p className="text-xs font-mono tracking-widest uppercase" style={{ color: ACCENT }}>
             // Analyze Session
           </p>
-          <h1 className="mt-4 text-2xl font-semibold leading-snug tracking-tight text-white sm:text-4xl lg:text-5xl">
+          <h1 className="mt-4 text-2xl font-semibold leading-snug tracking-tight sm:text-4xl lg:text-5xl">
             <span className="block">노래 찾기(MR), 마이크·영상 입력,</span>
             <span className="block">분석 결과를 하나의 화면에서 연결합니다.</span>
           </h1>
-          <p className="mt-4 max-w-3xl text-sm leading-7 sm:text-base" style={{ color: "#9ca3af" }}>
+          <p className="mt-4 max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base">
             노래 제목으로 MR을 찾아 고르고, 마이크로 부르거나 연습 영상·음원을 올려 AI가 음정과
             박자를 분석한 뒤 코칭 피드백을 받을 수 있습니다.
           </p>
@@ -218,14 +212,14 @@ export default function AnalyzePage() {
         <section className="grid min-w-0 gap-6 lg:grid-cols-2 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
           <div className="space-y-6">
             {/* STEP 1 */}
-            <article className="rounded-3xl border p-6" style={{ borderColor: "#1f1f1f", background: "#111111" }}>
+            <article className="rounded-3xl border border-border bg-card p-6">
               <div className="flex items-center gap-3">
-                <div className="rounded-full p-3" style={{ background: "#1a1a1a" }}>
-                  <Music4 className="h-5 w-5 text-white" aria-hidden="true" />
+                <div className="rounded-full bg-muted p-3">
+                  <Music4 className="h-5 w-5 text-foreground" aria-hidden="true" />
                 </div>
                 <div>
-                  <p className="text-sm" style={{ color: "#6b7280" }}>1단계</p>
-                  <h2 className="text-2xl font-semibold text-white">노래 찾기</h2>
+                  <p className="text-sm text-muted-foreground">1단계</p>
+                  <h2 className="text-2xl font-semibold">노래 찾기</h2>
                 </div>
               </div>
 
@@ -238,11 +232,7 @@ export default function AnalyzePage() {
                     type="search"
                     placeholder="예: 봄날, 밤편지, Defying Gravity"
                     autoComplete="off"
-                    className="w-full rounded-2xl border px-4 py-3 text-sm text-white outline-none"
-                    style={{
-                      background: "#0d0d0d",
-                      borderColor: "#2a2a2a",
-                    }}
+                    className="w-full rounded-2xl border border-border bg-muted/50 px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-ring dark:bg-[#0d0d0d]"
                   />
                 </div>
                 <button
@@ -257,13 +247,13 @@ export default function AnalyzePage() {
               </form>
 
               {!songFind.submittedQuery.trim() ? (
-                <p className="mt-6 text-sm leading-6" style={{ color: "#6b7280" }} role="status">
+                <p className="mt-6 text-sm leading-6 text-muted-foreground" role="status">
                   노래 제목을 입력한 뒤 검색하면 등록된 MR 정보가 있는 곡 목록이 표시됩니다.
                 </p>
               ) : searchLoading ? (
-                <p className="mt-6 text-sm leading-6" style={{ color: "#9ca3af" }} role="status">검색 중입니다…</p>
+                <p className="mt-6 text-sm leading-6 text-muted-foreground" role="status">검색 중입니다…</p>
               ) : songFind.hits.length === 0 ? (
-                <p className="mt-6 text-sm leading-6" style={{ color: "#9ca3af" }} role="status">
+                <p className="mt-6 text-sm leading-6 text-muted-foreground" role="status">
                   &quot;{songFind.submittedQuery}&quot;에 맞는 곡을 찾지 못했습니다.
                 </p>
               ) : (
@@ -277,17 +267,18 @@ export default function AnalyzePage() {
                         onClick={() => pickSong(song)}
                         className="rounded-2xl border p-4 text-left transition-colors"
                         style={{
-                          borderColor: active ? ACCENT + "88" : "#2a2a2a",
-                          background: active ? "#0d1a12" : "#0d0d0d",
+                          borderColor: active ? ACCENT + "88" : undefined,
+                          background: active ? "#0d1a12" : undefined,
                         }}
+                        data-active={active}
                       >
-                        <p className="text-base font-semibold text-white">{song.title}</p>
-                        <p className="mt-1 text-sm" style={{ color: active ? "#9ca3af" : "#6b7280" }}>{song.artist}</p>
-                        <div className="mt-4 space-y-1 text-xs" style={{ color: "#6b7280" }}>
+                        <p className="text-base font-semibold" style={{ color: active ? "#ffffff" : undefined }}>{song.title}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{song.artist}</p>
+                        <div className="mt-4 space-y-1 text-xs text-muted-foreground">
                           <p>BPM {song.bpm}</p>
                           <p>{song.song_key}</p>
                           <p>{song.range_label}</p>
-                          <p className="pt-2 text-xs font-medium" style={{ color: active ? ACCENT : "#9ca3af" }}>
+                          <p className="pt-2 text-xs font-medium" style={{ color: active ? ACCENT : undefined }}>
                             MR · {song.mr_track_name}
                           </p>
                           <p>{song.mr_description}</p>
@@ -300,21 +291,21 @@ export default function AnalyzePage() {
             </article>
 
             {/* STEP 2 */}
-            <article className="rounded-3xl border p-6" style={{ borderColor: "#1f1f1f", background: "#111111" }}>
+            <article className="rounded-3xl border border-border bg-card p-6">
               <div className="flex items-center gap-3">
-                <div className="rounded-full p-3" style={{ background: "#1a1a1a" }}>
-                  <Mic className="h-5 w-5 text-white" aria-hidden="true" />
+                <div className="rounded-full bg-muted p-3">
+                  <Mic className="h-5 w-5 text-foreground" aria-hidden="true" />
                 </div>
                 <div>
-                  <p className="text-sm" style={{ color: "#6b7280" }}>2단계</p>
-                  <h2 className="text-2xl font-semibold text-white">마이크 또는 영상·음원</h2>
+                  <p className="text-sm text-muted-foreground">2단계</p>
+                  <h2 className="text-2xl font-semibold">마이크 또는 영상·음원</h2>
                 </div>
               </div>
 
-              <p className="mt-4 text-sm leading-6" style={{ color: "#9ca3af" }}>{statusMessage}</p>
+              <p className="mt-4 text-sm leading-6 text-muted-foreground">{statusMessage}</p>
 
-              <div className="mt-6 rounded-2xl border p-5" style={{ borderColor: "#2a2a2a", background: "#0d0d0d" }}>
-                <p className="text-sm font-medium text-white">마이크로 직접 부르기</p>
+              <div className="mt-6 rounded-2xl border border-border bg-muted/40 p-5 dark:bg-[#0d0d0d]">
+                <p className="text-sm font-medium">마이크로 직접 부르기</p>
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                   <button
                     type="button"
@@ -333,8 +324,7 @@ export default function AnalyzePage() {
                     type="button"
                     onClick={stopRecording}
                     disabled={recordingState !== "recording"}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border px-5 py-3 text-sm font-medium transition-colors disabled:opacity-40"
-                    style={{ borderColor: "#2a2a2a", color: "#9ca3af" }}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-5 py-3 text-sm font-medium text-muted-foreground transition-colors disabled:opacity-40"
                   >
                     <StopCircle className="h-4 w-4" aria-hidden="true" />
                     녹음 정지
@@ -342,12 +332,12 @@ export default function AnalyzePage() {
                 </div>
               </div>
 
-              <div className="mt-6 rounded-2xl border p-5" style={{ borderColor: "#2a2a2a" }}>
+              <div className="mt-6 rounded-2xl border border-border p-5">
                 <div className="flex items-center gap-2">
-                  <FileVideo className="h-4 w-4" style={{ color: "#9ca3af" }} aria-hidden="true" />
-                  <p className="text-sm font-medium text-white">영상·음원 드래그 앤 드롭</p>
+                  <FileVideo className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  <p className="text-sm font-medium">영상·음원 드래그 앤 드롭</p>
                 </div>
-                <p className="mt-2 text-sm" style={{ color: "#6b7280" }}>
+                <p className="mt-2 text-sm text-muted-foreground">
                   커버 영상, 연습 녹화, MR 없는 클립 등에서 보컬 트랙을 분석합니다.
                 </p>
                 <VocalVideoDropzone
@@ -361,14 +351,14 @@ export default function AnalyzePage() {
             </article>
 
             {/* STEP 3 */}
-            <article className="rounded-3xl border p-6" style={{ borderColor: "#1f1f1f", background: "#111111" }}>
+            <article className="rounded-3xl border border-border bg-card p-6">
               <div className="flex items-center gap-3">
-                <div className="rounded-full p-3" style={{ background: "#1a1a1a" }}>
+                <div className="rounded-full bg-muted p-3">
                   <Sparkles className="h-5 w-5" style={{ color: ACCENT }} aria-hidden="true" />
                 </div>
                 <div>
-                  <p className="text-sm" style={{ color: "#6b7280" }}>3단계</p>
-                  <h2 className="text-2xl font-semibold text-white">분석 결과</h2>
+                  <p className="text-sm text-muted-foreground">3단계</p>
+                  <h2 className="text-2xl font-semibold">분석 결과</h2>
                 </div>
               </div>
 
@@ -382,13 +372,13 @@ export default function AnalyzePage() {
                 />
               </div>
 
-              <div className="mt-6 rounded-2xl border p-5" style={{ borderColor: "#2a2a2a", background: "#0d0d0d" }}>
+              <div className="mt-6 rounded-2xl border border-border bg-muted/40 p-5 dark:bg-[#0d0d0d]">
                 <div className="flex items-center gap-2 text-sm font-medium" style={{ color: ACCENT }}>
                   <Waves className="h-4 w-4" aria-hidden="true" />
                   선택된 곡 기준 분석 준비
                 </div>
-                <p className="mt-3 text-sm leading-6" style={{ color: "#9ca3af" }}>
-                  <span className="font-semibold text-white">
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                  <span className="font-semibold text-foreground">
                     {selectedSong?.title ?? "MR 미선택"}
                   </span>
                   {analysisResult?.fileName ? ` · 입력: ${analysisResult.fileName}` : ""}
@@ -402,16 +392,16 @@ export default function AnalyzePage() {
 
           <aside className="space-y-6">
             {/* 선택된 곡 */}
-            <article className="rounded-3xl border p-6" style={{ borderColor: "#1f1f1f", background: "#111111" }}>
-              <p className="text-sm font-medium" style={{ color: "#6b7280" }}>현재 선택</p>
+            <article className="rounded-3xl border border-border bg-card p-6">
+              <p className="text-sm font-medium text-muted-foreground">현재 선택</p>
               {selectedSong ? (
                 <>
-                  <h2 className="mt-2 text-2xl font-semibold text-white">{selectedSong.title}</h2>
-                  <p className="mt-1 text-sm" style={{ color: "#9ca3af" }}>{selectedSong.artist}</p>
-                  <div className="mt-6 rounded-2xl border px-4 py-3" style={{ borderColor: "#2a2a2a", background: "#0d0d0d" }}>
-                    <p className="text-xs font-mono uppercase tracking-wide" style={{ color: "#6b7280" }}>MR</p>
-                    <p className="mt-2 text-sm font-semibold text-white">{selectedSong.mr_track_name}</p>
-                    <p className="mt-1 text-sm leading-6" style={{ color: "#9ca3af" }}>{selectedSong.mr_description}</p>
+                  <h2 className="mt-2 text-2xl font-semibold">{selectedSong.title}</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">{selectedSong.artist}</p>
+                  <div className="mt-6 rounded-2xl border border-border bg-muted/40 px-4 py-3 dark:bg-[#0d0d0d]">
+                    <p className="text-xs font-mono uppercase tracking-wide text-muted-foreground">MR</p>
+                    <p className="mt-2 text-sm font-semibold">{selectedSong.mr_track_name}</p>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">{selectedSong.mr_description}</p>
                   </div>
                   <dl className="mt-6 space-y-4 text-sm">
                     {[
@@ -421,20 +411,20 @@ export default function AnalyzePage() {
                       { label: "상태", value: inputLabel },
                     ].map(({ label, value, mono }) => (
                       <div key={label} className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-                        <dt style={{ color: "#6b7280" }}>{label}</dt>
-                        <dd className={`font-medium text-white ${mono ? "break-all font-mono text-xs" : ""}`}>{value}</dd>
+                        <dt className="text-muted-foreground">{label}</dt>
+                        <dd className={`font-medium ${mono ? "break-all font-mono text-xs" : ""}`}>{value}</dd>
                       </div>
                     ))}
                   </dl>
                 </>
               ) : (
-                <p className="mt-3 text-sm leading-6" style={{ color: "#6b7280" }} role="status">
+                <p className="mt-3 text-sm leading-6 text-muted-foreground" role="status">
                   검색 결과에서 MR을 사용할 노래 카드를 눌러 선택해 주세요.
                 </p>
               )}
             </article>
 
-            {/* API 연결 배너 */}
+            {/* API 연결 배너 — 항상 다크(그린 테마) */}
             <article
               className="rounded-3xl border p-6"
               style={{ borderColor: ACCENT + "33", background: "#0d1a12" }}
@@ -458,15 +448,15 @@ export default function AnalyzePage() {
             </article>
 
             {/* 추천 배너 */}
-            <article className="rounded-3xl border p-6" style={{ borderColor: "#1f1f1f", background: "#111111" }}>
+            <article className="rounded-3xl border border-border bg-card p-6">
               <div className="flex items-center gap-2 text-sm font-medium" style={{ color: ACCENT }}>
                 <Sparkles className="h-4 w-4" aria-hidden="true" />
                 추천 배너
               </div>
-              <h2 className="mt-3 text-xl font-semibold text-white">
+              <h2 className="mt-3 text-xl font-semibold">
                 분석 결과를 바탕으로 추천 장르와 노래를 제안합니다.
               </h2>
-              <p className="mt-4 text-sm leading-6" style={{ color: "#9ca3af" }}>
+              <p className="mt-4 text-sm leading-6 text-muted-foreground">
                 음정 안정성, 박자 정확도, 발성 패턴을 기반으로 잘 맞는 장르와 다음에 도전하면 좋은 추천 곡을 안내합니다.
               </p>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -474,10 +464,10 @@ export default function AnalyzePage() {
                   { label: "추천 장르", value: "발라드, 뮤지컬 넘버" },
                   { label: "추천 곡", value: "밤편지, Defying Gravity" },
                 ].map(({ label, value }) => (
-                  <div key={label} className="rounded-2xl border p-4" style={{ borderColor: "#2a2a2a", background: "#0d0d0d" }}>
-                    <p className="text-xs font-mono uppercase tracking-wide" style={{ color: "#6b7280" }}>Recommendation</p>
-                    <p className="mt-2 text-sm font-semibold text-white">{label}</p>
-                    <p className="mt-1 text-sm" style={{ color: "#9ca3af" }}>{value}</p>
+                  <div key={label} className="rounded-2xl border border-border bg-muted/40 p-4 dark:bg-[#0d0d0d]">
+                    <p className="text-xs font-mono uppercase tracking-wide text-muted-foreground">Recommendation</p>
+                    <p className="mt-2 text-sm font-semibold">{label}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{value}</p>
                   </div>
                 ))}
               </div>
@@ -491,10 +481,10 @@ export default function AnalyzePage() {
 
 function ResultCard({ title, value, description }: { title: string; value: string; description: string }) {
   return (
-    <div className="rounded-2xl border p-5" style={{ borderColor: "#2a2a2a", background: "#0d0d0d" }}>
-      <p className="text-sm" style={{ color: "#6b7280" }}>{title}</p>
-      <p className="mt-3 break-words text-3xl font-semibold text-white">{value}</p>
-      <p className="mt-2 text-sm leading-6" style={{ color: "#9ca3af" }}>{description}</p>
+    <div className="rounded-2xl border border-border bg-muted/40 p-5 dark:bg-[#0d0d0d]">
+      <p className="text-sm text-muted-foreground">{title}</p>
+      <p className="mt-3 break-words text-3xl font-semibold">{value}</p>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
     </div>
   )
 }

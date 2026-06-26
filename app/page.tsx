@@ -1,11 +1,40 @@
 "use client"
 
+import dynamic from "next/dynamic"
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { ArrowRight, AudioLines, Music4, Circle } from "lucide-react"
-import { GeminiChat } from "@/components/gemini-chat"
-import { IuemGuideCarousel } from "@/components/iuem-guide-carousel"
-import { WeeklyKingBanner } from "@/components/weekly-king-banner"
+import { ArrowRight, AudioLines, Circle, Music4 } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
+
+const DynamicGeminiChat = dynamic(
+  () => import("@/components/gemini-chat").then((m) => ({ default: m.GeminiChat })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full space-y-3 rounded-2xl border border-border bg-card p-4">
+        <Skeleton className="h-4 w-1/3" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-9 w-full" />
+      </div>
+    ),
+  }
+)
+
+const DynamicWeeklyKingBanner = dynamic(
+  () => import("@/components/weekly-king-banner").then((m) => ({ default: m.WeeklyKingBanner })),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-48 w-full rounded-2xl" />,
+  }
+)
+
+const DynamicIuemGuideCarousel = dynamic(
+  () => import("@/components/iuem-guide-carousel").then((m) => ({ default: m.IuemGuideCarousel })),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-48 w-full rounded-2xl" />,
+  }
+)
 
 const LOG_LINES = [
   { time: "00:00:01", level: "INFO", msg: "IUEM AI Engine initializing..." },
@@ -41,7 +70,6 @@ function TerminalWidget() {
       className="w-full rounded-2xl border overflow-hidden"
       style={{ borderColor: "#1f1f1f", background: "#0d0d0d" }}
     >
-      {/* title bar */}
       <div
         className="flex items-center gap-2 px-4 py-3 border-b"
         style={{ borderColor: "#1f1f1f", background: "#111111" }}
@@ -58,15 +86,18 @@ function TerminalWidget() {
           style={{ color: ACCENT }}
         />
       </div>
-
-      {/* log body */}
       <div className="h-56 overflow-y-auto px-4 py-3 font-mono text-xs leading-6">
         {LOG_LINES.slice(0, visibleCount).map((line, i) => (
           <div key={i} className="flex gap-3">
             <span style={{ color: "#444" }}>{line.time}</span>
             <span
               style={{
-                color: line.level === "OK" ? ACCENT : line.level === "INFO" ? "#6b7280" : "#f87171",
+                color:
+                  line.level === "OK"
+                    ? ACCENT
+                    : line.level === "INFO"
+                      ? "#6b7280"
+                      : "#f87171",
                 minWidth: "2.5rem",
               }}
             >
@@ -104,44 +135,56 @@ const feedbackSamples = [
   },
 ]
 
+/* 배너 카드 — 라이트/다크 무관하게 항상 다크(악기 정체성 유지) */
+const BANNER_CARD = {
+  base: {
+    borderColor: "#1f1f1f",
+    background: "#111111",
+  },
+  hoverVocal: ACCENT + "55",
+  hoverInstrument: "#ffffff22",
+}
+
 export default function HomePage() {
   return (
-    <main
-      className="min-h-[calc(100vh-4rem)] min-w-0 overflow-x-hidden"
-      style={{ background: "#0A0A0A", color: "#e5e7eb" }}
-    >
-      {/* HERO */}
-      <section className="border-b" style={{ borderColor: "#1a1a1a" }}>
+    <main className="min-h-[calc(100vh-4rem)] min-w-0 overflow-x-hidden bg-background text-foreground">
+
+      {/* ── HERO ── */}
+      <section className="border-b border-border">
         <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-12 md:flex-row md:items-start md:justify-between md:py-16">
+
           {/* left */}
           <div className="max-w-[34rem]">
-            <p className="mb-4 text-xs font-mono tracking-widest uppercase" style={{ color: ACCENT }}>
+            <p
+              className="mb-4 text-xs font-mono tracking-widest uppercase"
+              style={{ color: ACCENT }}
+            >
               // IUEM AI Agent
             </p>
-            <h1 className="text-4xl font-semibold leading-[1.08] tracking-tight text-white sm:text-5xl md:text-6xl">
+            <h1 className="text-4xl font-semibold leading-[1.08] tracking-tight sm:text-5xl md:text-6xl">
               노래를 고르고,
               <br />
               부르면서 AI로
               <br />
               음정과 박자를 분석하세요.
             </h1>
-            <p className="mt-6 max-w-lg text-base leading-8" style={{ color: "#9ca3af" }}>
+            <p className="mt-6 max-w-lg text-base leading-8 text-muted-foreground">
               사용자가 선택한 가요나 뮤지컬 넘버를 AI가 분석하고,
               내장 마이크로 부른 결과를 바탕으로 음정·박자 정확도,
               그리고 다음 연습을 위한 코칭 피드백까지 제공합니다.
             </p>
 
             <div className="mt-10 grid gap-4 sm:grid-cols-2">
-              {/* vocal card */}
+              {/* 보컬 배너 — 항상 다크 */}
               <Link
                 href="/analyze"
-                className="group rounded-2xl border p-5 transition-colors"
-                style={{ borderColor: "#1f1f1f", background: "#111111" }}
+                className="group rounded-2xl border p-5 transition-all dark:hover:shadow-[0_0_24px_rgba(0,255,136,0.06)]"
+                style={BANNER_CARD.base}
                 onMouseEnter={(e) => {
-                  ;(e.currentTarget as HTMLElement).style.borderColor = ACCENT + "55"
+                  ;(e.currentTarget as HTMLElement).style.borderColor = BANNER_CARD.hoverVocal
                 }}
                 onMouseLeave={(e) => {
-                  ;(e.currentTarget as HTMLElement).style.borderColor = "#1f1f1f"
+                  ;(e.currentTarget as HTMLElement).style.borderColor = BANNER_CARD.base.borderColor
                 }}
               >
                 <div className="flex items-center gap-2 text-sm font-medium" style={{ color: "#6b7280" }}>
@@ -173,16 +216,16 @@ export default function HomePage() {
                 </div>
               </Link>
 
-              {/* instrument card */}
+              {/* 악기 배너 — 항상 다크 */}
               <Link
                 href="/instrument"
-                className="group rounded-2xl border p-5 transition-colors"
-                style={{ borderColor: "#1f1f1f", background: "#111111" }}
+                className="group rounded-2xl border p-5 transition-all dark:hover:shadow-[0_0_24px_rgba(255,255,255,0.04)]"
+                style={BANNER_CARD.base}
                 onMouseEnter={(e) => {
-                  ;(e.currentTarget as HTMLElement).style.borderColor = "#ffffff22"
+                  ;(e.currentTarget as HTMLElement).style.borderColor = BANNER_CARD.hoverInstrument
                 }}
                 onMouseLeave={(e) => {
-                  ;(e.currentTarget as HTMLElement).style.borderColor = "#1f1f1f"
+                  ;(e.currentTarget as HTMLElement).style.borderColor = BANNER_CARD.base.borderColor
                 }}
               >
                 <div className="flex items-center gap-2 text-sm font-medium" style={{ color: "#6b7280" }}>
@@ -213,31 +256,31 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* right — terminal + chat */}
+          {/* right — terminal (always dark) + chat (dynamic) */}
           <div className="mt-8 w-full max-w-xl space-y-4 md:mt-4 md:sticky md:top-32">
             <TerminalWidget />
-            <GeminiChat layout="sidebar" />
+            <DynamicGeminiChat layout="sidebar" />
           </div>
         </div>
       </section>
 
-      {/* WEEKLY + GUIDE */}
-      <section className="border-b" style={{ borderColor: "#1a1a1a" }}>
+      {/* ── WEEKLY + GUIDE ── */}
+      <section className="border-b border-border">
         <div className="mx-auto max-w-6xl px-4 py-8 md:py-10">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 md:items-start">
-            <WeeklyKingBanner />
-            <IuemGuideCarousel />
+            <DynamicWeeklyKingBanner />
+            <DynamicIuemGuideCarousel />
           </div>
         </div>
       </section>
 
-      {/* AI FEEDBACK CARDS */}
-      <section className="border-b" style={{ borderColor: "#1a1a1a", background: "#0d0d0d" }}>
+      {/* ── AI FEEDBACK CARDS ── */}
+      <section className="border-b border-border bg-muted/40 dark:bg-[#0d0d0d]">
         <div className="mx-auto max-w-6xl px-4 py-14">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div className="max-w-2xl">
-              <p className="text-sm font-medium" style={{ color: "#6b7280" }}>AI가 제공할 분석</p>
-              <h2 className="mt-2 text-3xl font-semibold tracking-tight text-white">
+              <p className="text-sm font-medium text-muted-foreground">AI가 제공할 분석</p>
+              <h2 className="mt-2 text-3xl font-semibold tracking-tight">
                 단순 점수만이 아니라, 왜 흔들렸는지까지 설명하는 보컬 피드백
               </h2>
             </div>
@@ -253,12 +296,11 @@ export default function HomePage() {
             {feedbackSamples.map((item) => (
               <article
                 key={item.title}
-                className="rounded-3xl border p-6"
-                style={{ borderColor: "#1f1f1f", background: "#111111" }}
+                className="rounded-3xl border border-border bg-card p-6"
               >
                 <AudioLines className="h-5 w-5" style={{ color: ACCENT }} aria-hidden="true" />
-                <h3 className="mt-5 text-xl font-semibold text-white">{item.title}</h3>
-                <p className="mt-3 text-sm leading-6" style={{ color: "#9ca3af" }}>
+                <h3 className="mt-5 text-xl font-semibold">{item.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
                   {item.description}
                 </p>
               </article>
@@ -267,7 +309,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* ── CTA ── */}
       <section className="mx-auto max-w-6xl px-4 py-14">
         <div
           className="rounded-[2rem] border px-6 py-10 sm:px-10"
@@ -281,7 +323,7 @@ export default function HomePage() {
               <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
                 선택한 노래, 사용자 음성, 분석 결과가 하나의 경험으로 이어지는 홈 화면
               </h2>
-              <p className="mt-4 text-sm leading-7 sm:text-base" style={{ color: "#9ca3af" }}>
+              <p className="mt-4 text-sm leading-7 text-white/60 sm:text-base">
                 추후 백엔드가 연결되면 가요와 뮤지컬 넘버를 아우르는 곡 선택 API, 마이크 입력
                 업로드, 음정/박자 정확도 분석, 그리고 자연어 피드백 결과를 이 홈 화면에서 바로
                 보여줄 수 있도록 설계했습니다.

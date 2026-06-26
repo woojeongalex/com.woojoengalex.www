@@ -44,7 +44,7 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <body className="min-h-screen overflow-x-hidden font-sans antialiased">
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <SiteHeader />
           {children}
           {process.env.NODE_ENV === 'production' && <Analytics />}

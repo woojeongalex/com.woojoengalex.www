@@ -57,20 +57,17 @@ export default function InstrumentPage() {
   }
 
   return (
-    <main
-      className="min-h-[calc(100vh-4rem)] px-4 py-8 sm:px-6"
-      style={{ background: "#0A0A0A", color: "#e5e7eb" }}
-    >
+    <main className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8 text-foreground sm:px-6">
       <div className="mx-auto max-w-3xl">
         <PageBackButton />
 
         {/* HERO */}
-        <section className="mt-6 rounded-2xl border px-6 py-8" style={{ borderColor: "#1f1f1f", background: "#0d0d0d" }}>
+        <section className="mt-6 rounded-2xl border border-border bg-muted/40 px-6 py-8 dark:bg-[#0d0d0d]">
           <p className="text-xs font-mono tracking-widest uppercase" style={{ color: ACCENT }}>
             // Instrument Tuning
           </p>
-          <h1 className="mt-3 text-3xl font-semibold text-white">악기 튜닝</h1>
-          <p className="mt-2 text-sm" style={{ color: "#9ca3af" }}>
+          <h1 className="mt-3 text-3xl font-semibold">악기 튜닝</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             기타·피아노 연주를 녹음하고 튜닝·음정 피드백을 받습니다.
           </p>
         </section>
@@ -91,22 +88,30 @@ export default function InstrumentPage() {
                   setStatus(`${item.label} 선택됨. 마이크 녹음을 시작하세요.`)
                 }}
                 className="rounded-2xl border p-5 text-left transition-colors"
-                style={{
-                  borderColor: active ? ACCENT + "88" : "#1f1f1f",
-                  background: active ? "#0d1a12" : "#111111",
-                }}
+                style={
+                  active
+                    ? { borderColor: ACCENT + "88", background: "#0d1a12" }
+                    : undefined
+                }
+                data-active={active}
               >
-                <Icon className="mb-3 h-6 w-6" style={{ color: active ? ACCENT : "#9ca3af" }} aria-hidden />
-                <p className="font-semibold text-white">{item.label}</p>
-                <p className="mt-1 text-xs" style={{ color: "#6b7280" }}>{item.standard_tuning}</p>
+                <Icon
+                  className="mb-3 h-6 w-6"
+                  style={{ color: active ? ACCENT : undefined }}
+                  aria-hidden
+                />
+                <p className="font-semibold" style={{ color: active ? "#ffffff" : undefined }}>
+                  {item.label}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">{item.standard_tuning}</p>
               </button>
             )
           })}
         </section>
 
         {/* 녹음 컨트롤 */}
-        <section className="mt-6 rounded-2xl border p-5" style={{ borderColor: "#1f1f1f", background: "#111111" }}>
-          <p className="mb-4 text-sm font-medium text-white">마이크 녹음</p>
+        <section className="mt-6 rounded-2xl border border-border bg-card p-5">
+          <p className="mb-4 text-sm font-medium">마이크 녹음</p>
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
@@ -122,34 +127,36 @@ export default function InstrumentPage() {
               type="button"
               disabled={mic.recording !== "recording" || loading}
               onClick={handleStop}
-              className="inline-flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-medium transition-colors disabled:opacity-40"
-              style={{ borderColor: "#2a2a2a", color: "#9ca3af" }}
+              className="inline-flex items-center gap-2 rounded-xl border border-border px-5 py-3 text-sm font-medium text-muted-foreground transition-colors disabled:opacity-40"
             >
               <StopCircle className="h-4 w-4" aria-hidden />
               멈추고 분석
             </button>
           </div>
-          <p className="mt-4 text-sm font-mono" style={{ color: "#9ca3af" }} role="status">
+          <p className="mt-4 text-sm font-mono text-muted-foreground" role="status">
             {error ?? success ?? status}
           </p>
         </section>
 
-        {/* 결과 */}
+        {/* 결과 — 항상 다크(그린 악센트 정체성) */}
         {result && (
-          <section className="mt-6 rounded-2xl border p-6" style={{ borderColor: ACCENT + "33", background: "#0d1a12" }}>
+          <section
+            className="mt-6 rounded-2xl border p-6"
+            style={{ borderColor: ACCENT + "33", background: "#0d1a12" }}
+          >
             <div className="flex items-center gap-2 text-sm font-medium" style={{ color: ACCENT }}>
               <Wrench className="h-4 w-4" aria-hidden />
               튜닝 결과
             </div>
             <p className="mt-4 text-4xl font-semibold text-white">{result.tuningAccuracy}%</p>
-            <p className="mt-1 text-sm" style={{ color: "#9ca3af" }}>
+            <p className="mt-1 text-sm text-white/60">
               평균 편차 약 {result.pitchDeviationCents} cents · {mic.durationSec}초 녹음
             </p>
-            <p className="mt-4 text-sm leading-7" style={{ color: "#d1d5db" }}>{result.summary}</p>
+            <p className="mt-4 text-sm leading-7 text-white/80">{result.summary}</p>
             <ul className="mt-4 space-y-2">
               {result.stringReadings.map((row) => (
                 <li key={row.label} className="flex justify-between text-sm font-mono">
-                  <span style={{ color: "#6b7280" }}>{row.label}</span>
+                  <span className="text-white/50">{row.label}</span>
                   <span style={{ color: ACCENT }}>{row.cents} cents</span>
                 </li>
               ))}
