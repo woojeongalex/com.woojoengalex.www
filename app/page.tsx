@@ -3,8 +3,12 @@
 import dynamic from "next/dynamic"
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { ArrowRight, AudioLines, Circle, Music4 } from "lucide-react"
+import { ArrowRight, AudioLines, Circle, Music4, Send } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
+import { sendEmail } from "@/lib/the-wire-api"
 
 const DynamicGeminiChat = dynamic(
   () => import("@/components/gemini-chat").then((m) => ({ default: m.GeminiChat })),
@@ -49,7 +53,7 @@ const LOG_LINES = [
   { time: "00:00:10", level: "INFO", msg: "Session active. Select a song to begin." },
 ]
 
-const ACCENT = "#00FF88"
+const ACCENT = "#ffffff"
 
 function TerminalWidget() {
   const [visibleCount, setVisibleCount] = useState(0)
@@ -124,6 +128,87 @@ function TerminalWidget() {
   )
 }
 
+function TheWireWidget() {
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null)
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const data = Object.fromEntries(new FormData(e.currentTarget)) as {
+      to: string
+      subject: string
+      topic: string
+    }
+    setLoading(true)
+    setResult(null)
+    try {
+      await sendEmail(data)
+      setResult({ success: true, message: "이메일이 전송됐습니다." })
+      e.currentTarget.reset()
+    } catch {
+      setResult({ success: false, message: "전송에 실패했습니다." })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div
+      className="w-full rounded-2xl border overflow-hidden"
+      style={{ borderColor: "#1f1f1f", background: "#0d0d0d" }}
+    >
+      {/* 타이틀 바 */}
+      <div
+        className="flex shrink-0 items-center gap-2 px-4 py-3 border-b"
+        style={{ borderColor: "#1f1f1f", background: "#111111" }}
+      >
+        <Send className="h-3 w-3" style={{ color: ACCENT }} />
+        <span className="ml-1 text-xs font-mono" style={{ color: "#555" }}>
+          the-wire — email agent
+        </span>
+      </div>
+      {/* 폼 */}
+      <form onSubmit={handleSubmit} className="px-4 py-3 space-y-2">
+        <Input
+          name="to"
+          type="email"
+          placeholder="받는 사람 (email)"
+          required
+          className="h-8 text-xs font-mono bg-transparent border-[#2a2a2a] text-[#d1d5db] placeholder:text-[#444] focus-visible:ring-0 focus-visible:border-[#444]"
+        />
+        <Input
+          name="subject"
+          placeholder="제목"
+          required
+          className="h-8 text-xs font-mono bg-transparent border-[#2a2a2a] text-[#d1d5db] placeholder:text-[#444] focus-visible:ring-0 focus-visible:border-[#444]"
+        />
+        <Textarea
+          name="topic"
+          placeholder="EXAONE에게 전달할 주제 (예: 오늘의 날씨를 한 줄로 재밌게 요약해줘)"
+          required
+          rows={2}
+          className="text-xs font-mono bg-transparent border-[#2a2a2a] text-[#d1d5db] placeholder:text-[#444] focus-visible:ring-0 focus-visible:border-[#444] resize-none"
+        />
+        {result && (
+          <p className={`text-xs font-mono ${result.success ? "" : "text-red-400"}`}
+            style={result.success ? { color: ACCENT } : {}}>
+            {result.success ? "▶ " : "✕ "}{result.message}
+          </p>
+        )}
+        <Button
+          type="submit"
+          disabled={loading}
+          size="sm"
+          className="w-full text-xs font-mono h-8"
+          style={{ background: ACCENT, color: "#000000" }}
+        >
+          {loading ? "EXAONE 작성 중..." : "전송"}
+        </Button>
+      </form>
+    </div>
+  )
+}
+
 const feedbackSamples = [
   {
     title: "음정 정확도 분석",
@@ -148,7 +233,7 @@ const BANNER_CARD = {
     borderColor: "#1f1f1f",
     background: "#111111",
   },
-  hoverVocal: ACCENT + "55",
+  hoverVocal: "#ffffff33",
   hoverInstrument: "#ffffff22",
 }
 
@@ -266,6 +351,7 @@ export default function HomePage() {
           {/* right — terminal (always dark) + chat (dynamic) */}
           <div className="mt-8 w-full max-w-xl space-y-4 md:mt-4 md:sticky md:top-32">
             <TerminalWidget />
+            <TheWireWidget />
             <DynamicGeminiChat layout="sidebar" />
           </div>
         </div>
@@ -320,7 +406,7 @@ export default function HomePage() {
       <section className="mx-auto max-w-6xl px-4 py-14">
         <div
           className="rounded-[2rem] border px-6 py-10 sm:px-10"
-          style={{ borderColor: ACCENT + "33", background: "#0d1a12" }}
+          style={{ borderColor: "#333333", background: "#111111" }}
         >
           <p className="text-xs font-mono tracking-widest uppercase" style={{ color: ACCENT }}>
             // 다음 단계
@@ -339,7 +425,7 @@ export default function HomePage() {
             <Link
               href="/analyze"
               className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-medium transition-opacity hover:opacity-80"
-              style={{ background: ACCENT, color: "#0A0A0A" }}
+              style={{ background: ACCENT, color: "#000000" }}
             >
               기능 시나리오 확인
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
