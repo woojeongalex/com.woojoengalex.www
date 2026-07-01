@@ -76,33 +76,30 @@ export default function TheWirePage() {
   }
 
   return (
-    <main className="min-h-[calc(100vh-4rem)] flex" style={{ background: "#0A0A0A", color: "#e5e7eb" }}>
+    <main className="min-h-[calc(100vh-4rem)] flex bg-white text-gray-900 dark:bg-[#0A0A0A] dark:text-gray-100">
       {/* 사이드바 */}
-      <aside
-        className="w-52 shrink-0 border-r flex flex-col py-6 px-3 gap-1"
-        style={{ borderColor: "#1f1f1f", background: "#0d0d0d" }}
-      >
-        <p className="text-xs font-mono tracking-widest px-2 mb-3" style={{ color: "#444" }}>
+      <aside className="w-52 shrink-0 border-r border-gray-200 dark:border-[#1f1f1f] flex flex-col py-6 px-3 gap-1 bg-gray-50 dark:bg-[#0d0d0d]">
+        <p className="text-xs font-mono tracking-widest px-2 mb-3 text-gray-400 dark:text-[#444]">
           THE WIRE
         </p>
         <button
           onClick={() => setTab("mail")}
-          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-left transition-colors"
-          style={{
-            background: tab === "mail" ? "#1a1a1a" : "transparent",
-            color: tab === "mail" ? "#ffffff" : "#6b7280",
-          }}
+          className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-left transition-colors ${
+            tab === "mail"
+              ? "bg-gray-200 dark:bg-[#1a1a1a] text-gray-900 dark:text-white"
+              : "text-gray-500 dark:text-[#6b7280] hover:bg-gray-100 dark:hover:bg-[#111]"
+          }`}
         >
           <Mail className="h-4 w-4" />
           메일관리
         </button>
         <button
           onClick={() => setTab("contacts")}
-          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-left transition-colors"
-          style={{
-            background: tab === "contacts" ? "#1a1a1a" : "transparent",
-            color: tab === "contacts" ? "#ffffff" : "#6b7280",
-          }}
+          className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-left transition-colors ${
+            tab === "contacts"
+              ? "bg-gray-200 dark:bg-[#1a1a1a] text-gray-900 dark:text-white"
+              : "text-gray-500 dark:text-[#6b7280] hover:bg-gray-100 dark:hover:bg-[#111]"
+          }`}
         >
           <BookUser className="h-4 w-4" />
           주소록
@@ -113,7 +110,7 @@ export default function TheWirePage() {
       <div className="flex-1 p-6">
         {tab === "mail" && (
           <div className="flex items-center justify-center h-full">
-            <p className="text-sm font-mono" style={{ color: "#444" }}>메일관리 기능 준비 중</p>
+            <p className="text-sm font-mono text-gray-400">메일관리 기능 준비 중</p>
           </div>
         )}
 
@@ -121,11 +118,10 @@ export default function TheWirePage() {
           <div className="max-w-3xl mx-auto">
             {/* 헤더 */}
             <div className="flex items-center justify-between mb-6">
-              <h1 className="text-xl font-semibold text-white">주소록</h1>
+              <h1 className="text-xl font-semibold">주소록</h1>
               <button
                 onClick={() => { setShowUpload(true); setUploadResult(null) }}
-                className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-opacity hover:opacity-80"
-                style={{ background: "#ffffff", color: "#000000" }}
+                className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium bg-gray-900 text-white dark:bg-white dark:text-black hover:opacity-80 transition-opacity"
               >
                 <Upload className="h-4 w-4" />
                 등록
@@ -134,34 +130,32 @@ export default function TheWirePage() {
 
             {/* 목록 */}
             {loadingList ? (
-              <div className="text-sm font-mono" style={{ color: "#444" }}>불러오는 중...</div>
+              <p className="text-sm font-mono text-gray-400">불러오는 중...</p>
             ) : contacts.length === 0 ? (
-              <div
-                className="rounded-2xl border p-10 text-center text-sm font-mono"
-                style={{ borderColor: "#1f1f1f", color: "#444" }}
-              >
+              <div className="rounded-2xl border border-gray-200 dark:border-[#1f1f1f] p-10 text-center text-sm font-mono text-gray-400">
                 등록된 연락처가 없습니다. CSV를 업로드해보세요.
               </div>
             ) : (
-              <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "#1f1f1f" }}>
+              <div className="rounded-2xl border border-gray-200 dark:border-[#1f1f1f] overflow-hidden">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr style={{ background: "#111111", borderBottom: "1px solid #1f1f1f" }}>
-                      <th className="text-left px-4 py-3 font-medium text-white">이름</th>
-                      <th className="text-left px-4 py-3 font-medium text-white">이메일</th>
+                    <tr className="bg-gray-100 dark:bg-[#111111] border-b border-gray-200 dark:border-[#1f1f1f]">
+                      <th className="text-left px-4 py-3 font-medium">이름</th>
+                      <th className="text-left px-4 py-3 font-medium">이메일</th>
                     </tr>
                   </thead>
                   <tbody>
                     {contacts.map((c, i) => (
                       <tr
                         key={c.email}
-                        style={{
-                          background: i % 2 === 0 ? "#0d0d0d" : "#111111",
-                          borderBottom: "1px solid #1a1a1a",
-                        }}
+                        className={`border-b border-gray-100 dark:border-[#1a1a1a] ${
+                          i % 2 === 0
+                            ? "bg-white dark:bg-[#0d0d0d]"
+                            : "bg-gray-50 dark:bg-[#111111]"
+                        }`}
                       >
-                        <td className="px-4 py-3 font-mono" style={{ color: "#d1d5db" }}>{c.name}</td>
-                        <td className="px-4 py-3 font-mono" style={{ color: "#6b7280" }}>{c.email}</td>
+                        <td className="px-4 py-3 font-mono text-gray-800 dark:text-[#d1d5db]">{c.name}</td>
+                        <td className="px-4 py-3 font-mono text-gray-500 dark:text-[#6b7280]">{c.email}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -175,25 +169,23 @@ export default function TheWirePage() {
       {/* 업로드 팝업 */}
       {showUpload && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: "rgba(0,0,0,0.7)" }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
           onClick={(e) => { if (e.target === e.currentTarget) setShowUpload(false) }}
         >
-          <div
-            className="relative w-full max-w-md rounded-2xl border p-6"
-            style={{ background: "#111111", borderColor: "#2a2a2a" }}
-          >
+          <div className="relative w-full max-w-md rounded-2xl border border-gray-200 dark:border-[#2a2a2a] p-6 bg-white dark:bg-[#111111] shadow-xl">
             <button
               onClick={() => setShowUpload(false)}
-              className="absolute top-4 right-4 transition-colors"
-              style={{ color: "#6b7280" }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
 
-            <h2 className="text-lg font-semibold text-white mb-1">주소록 CSV 업로드</h2>
-            <p className="text-xs font-mono mb-5" style={{ color: "#6b7280" }}>
-              CSV 헤더: <span style={{ color: "#d1d5db" }}>name, email</span> 또는 <span style={{ color: "#d1d5db" }}>이름, 이메일</span>
+            <h2 className="text-lg font-semibold mb-1">주소록 CSV 업로드</h2>
+            <p className="text-xs font-mono mb-5 text-gray-500">
+              CSV 헤더:{" "}
+              <span className="text-gray-800 dark:text-[#d1d5db]">name, email</span>
+              {" "}또는{" "}
+              <span className="text-gray-800 dark:text-[#d1d5db]">이름, 이메일</span>
             </p>
 
             <input
@@ -207,8 +199,7 @@ export default function TheWirePage() {
               type="button"
               disabled={uploading}
               onClick={() => fileInputRef.current?.click()}
-              className="w-full rounded-xl px-4 py-3 text-sm font-medium mb-4 transition-opacity hover:opacity-80 disabled:opacity-40"
-              style={{ background: "#ffffff", color: "#000000" }}
+              className="w-full rounded-xl px-4 py-3 text-sm font-medium mb-4 bg-gray-900 text-white dark:bg-white dark:text-black hover:opacity-80 disabled:opacity-40 transition-opacity"
             >
               {uploading ? "업로드 중…" : "파일 선택하기"}
             </button>
@@ -217,22 +208,18 @@ export default function TheWirePage() {
               onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
-              className="flex min-h-32 items-center justify-center rounded-xl border-2 border-dashed text-sm text-center transition-colors"
-              style={{
-                borderColor: isDragging ? "#ffffff" : "#2a2a2a",
-                background: isDragging ? "#1a1a1a" : "#0d0d0d",
-                color: isDragging ? "#ffffff" : "#6b7280",
-              }}
+              className={`flex min-h-32 items-center justify-center rounded-xl border-2 border-dashed text-sm text-center transition-colors ${
+                isDragging
+                  ? "border-gray-900 dark:border-white bg-gray-100 dark:bg-[#1a1a1a] text-gray-900 dark:text-white"
+                  : "border-gray-200 dark:border-[#2a2a2a] bg-gray-50 dark:bg-[#0d0d0d] text-gray-400"
+              }`}
             >
               CSV 파일을 여기에 드래그해서 놓으세요
             </div>
 
             {uploadResult && (
-              <div
-                className="mt-4 rounded-xl border px-4 py-3 text-sm font-mono"
-                style={{ borderColor: "#2a2a2a", background: "#0d0d0d", color: "#d1d5db" }}
-              >
-                ✓ 저장 <span className="text-white font-semibold">{uploadResult.saved}</span>건 &nbsp;/&nbsp; 스킵 {uploadResult.skipped}건
+              <div className="mt-4 rounded-xl border border-gray-200 dark:border-[#2a2a2a] px-4 py-3 text-sm font-mono bg-gray-50 dark:bg-[#0d0d0d] text-gray-600 dark:text-[#d1d5db]">
+                ✓ 저장 <span className="font-semibold text-gray-900 dark:text-white">{uploadResult.saved}</span>건 &nbsp;/&nbsp; 스킵 {uploadResult.skipped}건
               </div>
             )}
           </div>
