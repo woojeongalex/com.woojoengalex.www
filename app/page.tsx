@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic"
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { ArrowRight, AudioLines, Circle, Music4, Send } from "lucide-react"
+import { ArrowRight, AudioLines, BookUser, Circle, Music4, Send } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -186,6 +186,14 @@ function TheWireWidget() {
         <span className="ml-1 text-xs font-mono" style={{ color: "#555" }}>
           the-wire — email agent
         </span>
+        <a
+          href="/the-wire"
+          className="ml-2 flex items-center gap-1 text-xs font-mono transition-opacity hover:opacity-70"
+          style={{ color: "#6b7280" }}
+        >
+          <BookUser className="h-3 w-3" />
+          주소록
+        </a>
         {!session && (
           <button
             onClick={() => signIn("google")}
