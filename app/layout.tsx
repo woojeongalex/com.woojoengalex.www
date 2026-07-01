@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { SiteHeader } from '@/components/site-header'
 import { ThemeProvider } from '@/components/theme-provider'
+import { AuthSessionProvider } from '@/components/session-provider'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -44,11 +45,13 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <body className="min-h-screen overflow-x-hidden font-sans antialiased">
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-          <SiteHeader />
-          {children}
-          {process.env.NODE_ENV === 'production' && <Analytics />}
-        </ThemeProvider>
+        <AuthSessionProvider>
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+            <SiteHeader />
+            {children}
+            {process.env.NODE_ENV === 'production' && <Analytics />}
+          </ThemeProvider>
+        </AuthSessionProvider>
       </body>
     </html>
   )

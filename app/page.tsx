@@ -9,6 +9,9 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { sendEmail } from "@/lib/the-wire-api"
+import { useSession, signIn } from "next-auth/react"
+import { searchContacts } from "@/lib/people-api"
+import type { Contact } from "@/lib/people-api"
 
 const DynamicGeminiChat = dynamic(
   () => import("@/components/gemini-chat").then((m) => ({ default: m.GeminiChat })),
@@ -129,22 +132,39 @@ function TerminalWidget() {
 }
 
 function TheWireWidget() {
+  const { data: session } = useSession()
+  const [to, setTo] = useState("")
+  const [subject, setSubject] = useState("")
+  const [topic, setTopic] = useState("")
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [suggestions, setSuggestions] = useState<Contact[]>([])
+
+  async function handleToChange(value: string) {
+    setTo(value)
+    if (session?.accessToken && value.length >= 1) {
+      const contacts = await searchContacts(value, session.accessToken as string)
+      setSuggestions(contacts)
+    } else {
+      setSuggestions([])
+    }
+  }
+
+  function handleSelect(contact: Contact) {
+    setTo(contact.email)
+    setSuggestions([])
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const data = Object.fromEntries(new FormData(e.currentTarget)) as {
-      to: string
-      subject: string
-      topic: string
-    }
     setLoading(true)
     setResult(null)
     try {
-      await sendEmail(data)
+      await sendEmail({ to, subject, topic })
       setResult({ success: true, message: "이메일이 전송됐습니다." })
-      e.currentTarget.reset()
+      setTo("")
+      setSubject("")
+      setTopic("")
     } catch {
       setResult({ success: false, message: "전송에 실패했습니다." })
     } finally {
@@ -166,32 +186,65 @@ function TheWireWidget() {
         <span className="ml-1 text-xs font-mono" style={{ color: "#555" }}>
           the-wire — email agent
         </span>
+        {!session && (
+          <button
+            onClick={() => signIn("google")}
+            className="ml-auto text-xs font-mono px-2 py-1 rounded"
+            style={{ background: "#ffffff", color: "#000000" }}
+          >
+            Google 로그인
+          </button>
+        )}
       </div>
       {/* 폼 */}
       <form onSubmit={handleSubmit} className="px-4 py-3 space-y-2">
+        {/* 수신자 + 자동완성 */}
+        <div className="relative">
+          <Input
+            value={to}
+            onChange={(e) => handleToChange(e.target.value)}
+            placeholder="받는 사람 이름 또는 이메일"
+            required
+            className="h-8 text-xs font-mono bg-transparent border-[#2a2a2a] text-[#d1d5db] placeholder:text-[#444] focus-visible:ring-0 focus-visible:border-[#444]"
+          />
+          {suggestions.length > 0 && (
+            <ul
+              className="absolute left-0 right-0 z-10 mt-1 rounded border overflow-hidden"
+              style={{ background: "#1a1a1a", borderColor: "#2a2a2a" }}
+            >
+              {suggestions.map((c) => (
+                <li
+                  key={c.email}
+                  onClick={() => handleSelect(c)}
+                  className="px-3 py-2 text-xs font-mono cursor-pointer hover:bg-[#2a2a2a]"
+                  style={{ color: "#d1d5db" }}
+                >
+                  {c.name} — {c.email}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <Input
-          name="to"
-          type="email"
-          placeholder="받는 사람 (email)"
-          required
-          className="h-8 text-xs font-mono bg-transparent border-[#2a2a2a] text-[#d1d5db] placeholder:text-[#444] focus-visible:ring-0 focus-visible:border-[#444]"
-        />
-        <Input
-          name="subject"
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
           placeholder="제목"
           required
           className="h-8 text-xs font-mono bg-transparent border-[#2a2a2a] text-[#d1d5db] placeholder:text-[#444] focus-visible:ring-0 focus-visible:border-[#444]"
         />
         <Textarea
-          name="topic"
+          value={topic}
+          onChange={(e) => setTopic(e.target.value)}
           placeholder="EXAONE에게 전달할 주제 (예: 오늘의 날씨를 한 줄로 재밌게 요약해줘)"
           required
           rows={2}
           className="text-xs font-mono bg-transparent border-[#2a2a2a] text-[#d1d5db] placeholder:text-[#444] focus-visible:ring-0 focus-visible:border-[#444] resize-none"
         />
         {result && (
-          <p className={`text-xs font-mono ${result.success ? "" : "text-red-400"}`}
-            style={result.success ? { color: ACCENT } : {}}>
+          <p
+            className={`text-xs font-mono ${result.success ? "" : "text-red-400"}`}
+            style={result.success ? { color: ACCENT } : {}}
+          >
             {result.success ? "▶ " : "✕ "}{result.message}
           </p>
         )}
