@@ -46,11 +46,12 @@ export async function searchContacts(
 ): Promise<Contact[]> {
   if (!query || query.length < 1) return []
 
-  // 1. 로컬 DB 먼저 검색
+  // 1. 로컬 DB 먼저 검색 (로그인 불필요)
   const local = await searchLocal(query)
   if (local.length > 0) return local
 
-  // 2. 로컬에 없으면 Google API 검색
+  // 2. 로컬에 없고 Google 로그인 된 경우에만 Google API 검색
+  if (!accessToken) return []
   const google = await searchGoogle(query, accessToken)
 
   // 3. 검색 결과를 로컬 DB에 저장 (소버린 AI)

@@ -1,7 +1,7 @@
 "use client"
 
 import { ChangeEvent, useEffect, useRef, useState } from "react"
-import { BookUser, Mail, Upload, X } from "lucide-react"
+import { BookUser, Inbox, Mail, Upload, X } from "lucide-react"
 
 interface Contact {
   name: string
@@ -13,10 +13,37 @@ interface UploadResult {
   skipped: number
 }
 
-type Tab = "mail" | "contacts"
+interface InboxMail {
+  id: number
+  sender: string
+  subject: string
+  body: string
+  received_at: string
+  is_read: boolean
+}
+
+type Tab = "mail" | "contacts" | "inbox"
 
 export default function TheWirePage() {
   const [tab, setTab] = useState<Tab>("contacts")
+  const [inboxMails, setInboxMails] = useState<InboxMail[]>([])
+  const [loadingInbox, setLoadingInbox] = useState(false)
+  const [selectedMail, setSelectedMail] = useState<InboxMail | null>(null)
+
+  async function fetchInbox() {
+    setLoadingInbox(true)
+    try {
+      const res = await fetch("http://localhost:8000/api/the-wire/inbox")
+      const data = await res.json()
+      setInboxMails(data.mails ?? [])
+    } finally {
+      setLoadingInbox(false)
+    }
+  }
+
+  useEffect(() => {
+    if (tab === "inbox") fetchInbox()
+  }, [tab])
   const [contacts, setContacts] = useState<Contact[]>([])
   const [loadingList, setLoadingList] = useState(false)
   const [showUpload, setShowUpload] = useState(false)
@@ -104,6 +131,17 @@ export default function TheWirePage() {
           <BookUser className="h-4 w-4" />
           주소록
         </button>
+        <button
+          onClick={() => setTab("inbox")}
+          className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-left transition-colors ${
+            tab === "inbox"
+              ? "bg-gray-200 dark:bg-[#1a1a1a] text-gray-900 dark:text-white"
+              : "text-gray-500 dark:text-[#6b7280] hover:bg-gray-100 dark:hover:bg-[#111]"
+          }`}
+        >
+          <Inbox className="h-4 w-4" />
+          받은 메일함
+        </button>
       </aside>
 
       {/* 메인 콘텐츠 */}
@@ -111,6 +149,53 @@ export default function TheWirePage() {
         {tab === "mail" && (
           <div className="flex items-center justify-center h-full">
             <p className="text-sm font-mono text-gray-400">메일관리 기능 준비 중</p>
+          </div>
+        )}
+
+        {tab === "inbox" && (
+          <div className="max-w-3xl mx-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-xl font-semibold">받은 메일함</h1>
+              <button
+                onClick={fetchInbox}
+                className="rounded-lg px-4 py-2 text-sm font-medium bg-gray-900 text-white dark:bg-white dark:text-black hover:opacity-80 transition-opacity"
+              >
+                새로고침
+              </button>
+            </div>
+
+            {loadingInbox ? (
+              <p className="text-sm font-mono text-gray-400">불러오는 중...</p>
+            ) : inboxMails.length === 0 ? (
+              <div className="rounded-2xl border border-gray-200 dark:border-[#1f1f1f] p-10 text-center text-sm font-mono text-gray-400">
+                받은 메일이 없습니다.
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-gray-200 dark:border-[#1f1f1f] overflow-hidden">
+                {inboxMails.map((mail, i) => (
+                  <div
+                    key={mail.id}
+                    onClick={() => setSelectedMail(selectedMail?.id === mail.id ? null : mail)}
+                    className={`cursor-pointer border-b border-gray-100 dark:border-[#1a1a1a] px-4 py-3 ${
+                      i % 2 === 0 ? "bg-white dark:bg-[#0d0d0d]" : "bg-gray-50 dark:bg-[#111111]"
+                    } ${!mail.is_read ? "font-semibold" : ""}`}
+                  >
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-mono text-gray-800 dark:text-[#d1d5db]">{mail.sender}</span>
+                      <span className="text-xs font-mono text-gray-400">
+                        {new Date(mail.received_at).toLocaleString("ko-KR")}
+                      </span>
+                    </div>
+                    <div className="text-sm mt-0.5 text-gray-600 dark:text-[#9ca3af]">{mail.subject}</div>
+                    {selectedMail?.id === mail.id && (
+                      <div className="mt-3 text-sm font-mono text-gray-700 dark:text-[#d1d5db] whitespace-pre-wrap border-t border-gray-200 dark:border-[#2a2a2a] pt-3">
+                        {mail.body}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

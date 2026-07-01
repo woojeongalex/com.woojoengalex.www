@@ -142,8 +142,8 @@ function TheWireWidget() {
 
   async function handleToChange(value: string) {
     setTo(value)
-    if (session?.accessToken && value.length >= 1) {
-      const contacts = await searchContacts(value, session.accessToken as string)
+    if (value.length >= 1) {
+      const contacts = await searchContacts(value, (session?.accessToken as string) ?? "")
       setSuggestions(contacts)
     } else {
       setSuggestions([])
