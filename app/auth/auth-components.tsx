@@ -1,24 +1,25 @@
-import { Check, type LucideIcon } from "lucide-react"
-import type { ReactNode } from "react"
+import { Check, type LucideIcon } from 'lucide-react'
+import type { ReactNode } from 'react'
 
-export type AvailabilityStatus = "idle" | "checking" | "available" | "taken" | "error"
+export type AvailabilityStatus =
+  'idle' | 'checking' | 'available' | 'taken' | 'error'
 
 export const btnPrimary =
-  "inline-flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-950 px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-60"
+  'inline-flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-950 px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-60'
 
 export function availabilityLabel(
   status: AvailabilityStatus,
-  takenText = "이미 사용중"
-): { text: string; tone: "success" | "error" | "neutral" } | undefined {
+  takenText = '이미 사용중'
+): { text: string; tone: 'success' | 'error' | 'neutral' } | undefined {
   switch (status) {
-    case "checking":
-      return { text: "확인 중...", tone: "neutral" }
-    case "available":
-      return { text: "사용가능", tone: "success" }
-    case "taken":
-      return { text: takenText, tone: "error" }
-    case "error":
-      return { text: "확인 실패", tone: "error" }
+    case 'checking':
+      return { text: '확인 중...', tone: 'neutral' }
+    case 'available':
+      return { text: '사용가능', tone: 'success' }
+    case 'taken':
+      return { text: takenText, tone: 'error' }
+    case 'error':
+      return { text: '확인 실패', tone: 'error' }
     default:
       return undefined
   }
@@ -73,26 +74,34 @@ export function FormHeader({
   )
 }
 
-type FieldStatus = { text: string; tone: "success" | "error" | "neutral"; icon?: "check" }
+type FieldStatus = {
+  text: string
+  tone: 'success' | 'error' | 'neutral'
+  icon?: 'check'
+}
 
 function StatusBadge({ status }: { status?: FieldStatus }) {
   if (!status) return null
   const color =
-    status.tone === "success"
-      ? "text-green-600"
-      : status.tone === "error"
-        ? "text-red-600"
-        : "text-zinc-500"
+    status.tone === 'success'
+      ? 'text-green-600'
+      : status.tone === 'error'
+        ? 'text-red-600'
+        : 'text-zinc-500'
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-semibold ${color}`}>
-      {status.icon === "check" && <Check className="h-3.5 w-3.5" aria-hidden="true" />}
+    <span
+      className={`inline-flex items-center gap-1 text-xs font-semibold ${color}`}
+    >
+      {status.icon === 'check' && (
+        <Check className="h-3.5 w-3.5" aria-hidden="true" />
+      )}
       {status.text}
     </span>
   )
 }
 
 const inputClass =
-  "w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-950"
+  'w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-950'
 
 export function Field({
   name,
@@ -128,7 +137,7 @@ export function Field({
         className={inputClass}
         {...(controlled
           ? { value, onChange: (e) => onChange(e.target.value) }
-          : { defaultValue: "" })}
+          : { defaultValue: '' })}
       />
     </label>
   )

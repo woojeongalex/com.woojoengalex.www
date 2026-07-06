@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server"
-import { proxyGet } from "@/app/api/_lib/proxy"
+import { NextResponse } from 'next/server'
+import { proxyGet } from '@/app/api/_lib/proxy'
 
 type CheckConfig = {
   param: string

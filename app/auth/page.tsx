@@ -1,13 +1,13 @@
-"use client"
+'use client'
 
-import { useState } from "react"
-import { LoginForm } from "./login-form"
-import { SignupForm } from "./signup-form"
+import { useState } from 'react'
+import { LoginForm } from './login-form'
+import { SignupForm } from './signup-form'
 
-type AuthMode = "login" | "signup"
+type AuthMode = 'login' | 'signup'
 
 export default function AuthPage() {
-  const [mode, setMode] = useState<AuthMode>("login")
+  const [mode, setMode] = useState<AuthMode>('login')
 
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-white px-4 py-10 text-zinc-950">
@@ -26,11 +26,15 @@ export default function AuthPage() {
           </p>
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             <div className="rounded-2xl border border-zinc-800 bg-white/5 p-5">
-              <p className="text-sm font-medium text-zinc-400">로그인 후 가능</p>
+              <p className="text-sm font-medium text-zinc-400">
+                로그인 후 가능
+              </p>
               <p className="mt-3 text-2xl font-semibold">분석 기록 저장</p>
             </div>
             <div className="rounded-2xl border border-zinc-800 bg-white/5 p-5">
-              <p className="text-sm font-medium text-zinc-400">회원가입 후 가능</p>
+              <p className="text-sm font-medium text-zinc-400">
+                회원가입 후 가능
+              </p>
               <p className="mt-3 text-2xl font-semibold">맞춤 피드백 축적</p>
             </div>
           </div>
@@ -38,20 +42,22 @@ export default function AuthPage() {
 
         <section className="rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
           <div className="flex rounded-2xl border border-zinc-200 bg-zinc-50 p-1">
-            {(["login", "signup"] as const).map((tab) => (
+            {(['login', 'signup'] as const).map((tab) => (
               <button
                 key={tab}
                 type="button"
                 onClick={() => setMode(tab)}
                 className={`flex-1 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
-                  mode === tab ? "bg-zinc-950 text-white" : "text-zinc-600 hover:bg-zinc-100"
+                  mode === tab
+                    ? 'bg-zinc-950 text-white'
+                    : 'text-zinc-600 hover:bg-zinc-100'
                 }`}
               >
-                {tab === "login" ? "로그인" : "회원가입"}
+                {tab === 'login' ? '로그인' : '회원가입'}
               </button>
             ))}
           </div>
-          {mode === "login" ? <LoginForm /> : <SignupForm />}
+          {mode === 'login' ? <LoginForm /> : <SignupForm />}
         </section>
       </div>
     </main>

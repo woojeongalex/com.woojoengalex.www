@@ -1,4 +1,4 @@
-import { getMusicJson, postMusicJson } from "@/lib/music-api-fetch"
+import { getMusicJson, postMusicJson } from '@/lib/music-api-fetch'
 
 export type InstrumentCatalogHit = {
   instrument_id: string
@@ -14,7 +14,7 @@ export type InstrumentCatalogPayload = {
 }
 
 export async function fetchInstrumentCatalog(
-  query = ""
+  query = ''
 ): Promise<InstrumentCatalogPayload> {
   const q = query.trim()
   const data = await getMusicJson<InstrumentCatalogPayload>(
@@ -28,7 +28,7 @@ export async function fetchInstrumentCatalog(
 }
 
 export type InstrumentEvaluationPayload = {
-  instrumentId: "guitar" | "piano"
+  instrumentId: 'guitar' | 'piano'
   tuningAccuracy: number
   pitchDeviationCents: number
   summary: string
@@ -44,8 +44,8 @@ export type InstrumentEvaluationResponse = {
 }
 
 export function postInstrumentEvaluation(payload: InstrumentEvaluationPayload) {
-  return postMusicJson<InstrumentEvaluationPayload, InstrumentEvaluationResponse>(
-    "/api/music/instrument-evaluation",
-    payload
-  )
+  return postMusicJson<
+    InstrumentEvaluationPayload,
+    InstrumentEvaluationResponse
+  >('/api/music/instrument-evaluation', payload)
 }

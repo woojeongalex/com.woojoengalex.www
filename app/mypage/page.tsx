@@ -1,35 +1,37 @@
-"use client"
+'use client'
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { PageBackButton } from "@/components/page-back-button"
-import { useUserSession } from "@/hooks/use-user-session"
+import { useEffect, useSyncExternalStore } from 'react'
+import { useRouter } from 'next/navigation'
+import { PageBackButton } from '@/components/page-back-button'
+import { useUserSession } from '@/hooks/use-user-session'
 import {
   clearUserSession,
   getUserDisplayName,
   getUserSession,
-} from "@/lib/auth-session"
+} from '@/lib/auth-session'
 
 const navLinkClass =
-  "inline-flex shrink-0 items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors"
+  'inline-flex shrink-0 items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors'
+
+const subscribeNoop = () => () => {}
 
 export default function MyPage() {
   const router = useRouter()
   const user = useUserSession()
-  const [hydrated, setHydrated] = useState(false)
-
-  useEffect(() => {
-    setHydrated(true)
-  }, [])
+  const hydrated = useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false
+  )
 
   useEffect(() => {
     if (!hydrated) return
-    if (!getUserSession()) router.replace("/auth")
+    if (!getUserSession()) router.replace('/auth')
   }, [hydrated, router])
 
   const handleLogout = () => {
     clearUserSession()
-    router.push("/")
+    router.push('/')
   }
 
   if (!hydrated || !user) {
@@ -46,21 +48,28 @@ export default function MyPage() {
     <main className="min-h-[calc(100vh-4rem)] bg-white px-4 py-10 text-zinc-950">
       <div className="mx-auto w-full max-w-lg">
         <PageBackButton href="/" label="홈으로" />
-        <h1 className="mt-6 text-3xl font-semibold tracking-tight">마이페이지</h1>
+        <h1 className="mt-6 text-3xl font-semibold tracking-tight">
+          마이페이지
+        </h1>
         <p className="mt-2 text-sm text-zinc-600">
-          안녕하세요, <span className="font-semibold text-zinc-950">{displayName}</span>님
+          안녕하세요,{' '}
+          <span className="font-semibold text-zinc-950">{displayName}</span>님
         </p>
 
         <section className="mt-8 rounded-2xl border border-zinc-200 bg-zinc-50 p-6">
           <dl className="grid gap-4 text-sm">
             <div>
               <dt className="font-medium text-zinc-500">아이디</dt>
-              <dd className="mt-1 font-semibold text-zinc-950">{user.username}</dd>
+              <dd className="mt-1 font-semibold text-zinc-950">
+                {user.username}
+              </dd>
             </div>
             {user.nickname?.trim() ? (
               <div>
                 <dt className="font-medium text-zinc-500">닉네임</dt>
-                <dd className="mt-1 font-semibold text-zinc-950">{user.nickname}</dd>
+                <dd className="mt-1 font-semibold text-zinc-950">
+                  {user.nickname}
+                </dd>
               </div>
             ) : null}
           </dl>

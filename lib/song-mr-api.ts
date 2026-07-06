@@ -1,4 +1,4 @@
-import { getMusicJson } from "@/lib/music-api-fetch"
+import { getMusicJson } from '@/lib/music-api-fetch'
 
 /** FastAPI `GET /api/songs/search` 응답 (Next 프록시 경유) */
 
@@ -21,7 +21,9 @@ export type SongMrSearchPayload = {
   count: number
 }
 
-export async function fetchSongMrSearch(query: string): Promise<SongMrSearchPayload> {
+export async function fetchSongMrSearch(
+  query: string
+): Promise<SongMrSearchPayload> {
   const q = query.trim()
   const data = await getMusicJson<SongMrSearchPayload>(
     `/api/songs/search?${new URLSearchParams({ q })}`

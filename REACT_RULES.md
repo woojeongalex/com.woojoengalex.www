@@ -46,12 +46,12 @@ UI 전용: `useAsyncAction`, `useAvailabilityCheck`
 
 API 원문·스택·URL·환경 변수명을 화면에 노출하지 않는다.
 
-| 규칙 | 설명 |
-|------|------|
-| `UserFacingError` / `UI_ERRORS` | 허용된 문구만 throw·표시 |
-| `apiErrorOrFallback` / `parseFastApiDetail` | FastAPI `detail`·`error` 필터링 |
-| `useAsyncAction` | `e.message`를 그대로 UI에 넣지 않음 |
-| `role="status"` | 폼·인라인 오류 (라이브 리전은 `alert` 대신 status) |
+| 규칙                                        | 설명                                               |
+| ------------------------------------------- | -------------------------------------------------- |
+| `UserFacingError` / `UI_ERRORS`             | 허용된 문구만 throw·표시                           |
+| `apiErrorOrFallback` / `parseFastApiDetail` | FastAPI `detail`·`error` 필터링                    |
+| `useAsyncAction`                            | `e.message`를 그대로 UI에 넣지 않음                |
+| `role="status"`                             | 폼·인라인 오류 (라이브 리전은 `alert` 대신 status) |
 
 **금지:** `alert()`로 응답 JSON 표시, `error.message`·`data.error` 원문 그대로 표시, `GEMINI_API_KEY`·`API_BASE`·`localhost` 안내
 

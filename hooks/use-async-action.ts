@@ -1,5 +1,5 @@
-import { useCallback, useState } from "react"
-import { toUserFacingMessage } from "@/lib/user-facing-error"
+import { useCallback, useState } from 'react'
+import { toUserFacingMessage } from '@/lib/user-facing-error'
 
 /** 폼 제출용 — loading / error / success 한곳에서 관리 */
 export function useAsyncAction() {
@@ -13,7 +13,7 @@ export function useAsyncAction() {
   }, [])
 
   const run = useCallback(
-    async <T,>(
+    async <T>(
       task: () => Promise<T>,
       options?: {
         fallbackError?: string
@@ -23,12 +23,12 @@ export function useAsyncAction() {
     ): Promise<T | null> => {
       clearMessages()
       setLoading(true)
-      const fallback = options?.fallbackError ?? "요청에 실패했습니다."
+      const fallback = options?.fallbackError ?? '요청에 실패했습니다.'
       try {
         const result = await task()
         if (options?.successMessage) {
           setSuccess(
-            typeof options.successMessage === "function"
+            typeof options.successMessage === 'function'
               ? options.successMessage(result)
               : options.successMessage
           )

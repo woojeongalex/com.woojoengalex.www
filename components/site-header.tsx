@@ -1,32 +1,32 @@
-"use client"
+'use client'
 
-import Link from "next/link"
-import { BarChart2, ChevronDown, Moon, Sun } from "lucide-react"
-import { useTheme } from "next-themes"
-import { WeatherWidget } from "@/components/weather-widget"
+import Link from 'next/link'
+import { BarChart2, ChevronDown, Moon, Sun } from 'lucide-react'
+import { useTheme } from 'next-themes'
+import { WeatherWidget } from '@/components/weather-widget'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { useUserSession } from "@/hooks/use-user-session"
-import { getUserDisplayName } from "@/lib/auth-session"
+} from '@/components/ui/dropdown-menu'
+import { useUserSession } from '@/hooks/use-user-session'
+import { getUserDisplayName } from '@/lib/auth-session'
 
 const navLinkClass =
-  "inline-flex shrink-0 items-center justify-center rounded-lg border px-3 py-2 text-xs font-medium transition-colors sm:px-4 sm:text-sm"
+  'inline-flex shrink-0 items-center justify-center rounded-lg border px-3 py-2 text-xs font-medium transition-colors sm:px-4 sm:text-sm'
 
 /** MENU 드롭다운 — 흰 건반 / 검은 건반 */
 const pianoMenuKeyWhite =
-  "rounded-none bg-white px-4 py-3 font-medium text-zinc-900 focus:bg-zinc-100 focus:text-zinc-900 data-[highlighted]:bg-zinc-100 data-[highlighted]:text-zinc-900"
+  'rounded-none bg-white px-4 py-3 font-medium text-zinc-900 focus:bg-zinc-100 focus:text-zinc-900 data-[highlighted]:bg-zinc-100 data-[highlighted]:text-zinc-900'
 const pianoMenuKeyBlack =
-  "rounded-none border-t border-zinc-300 bg-zinc-900 px-4 py-3 font-medium text-white focus:bg-zinc-800 focus:text-white data-[highlighted]:bg-zinc-800 data-[highlighted]:text-white"
+  'rounded-none border-t border-zinc-300 bg-zinc-900 px-4 py-3 font-medium text-white focus:bg-zinc-800 focus:text-white data-[highlighted]:bg-zinc-800 data-[highlighted]:text-white'
 
 function ThemeToggle() {
   const { theme, setTheme } = useTheme()
   return (
     <button
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
       className={`${navLinkClass} border-border bg-background text-foreground hover:bg-accent`}
       aria-label="테마 전환"
     >
@@ -99,7 +99,7 @@ export function SiteHeader() {
           </div>
           {user && (
             <p className="min-w-0 truncate pl-0.5 text-sm font-bold text-foreground sm:text-base md:text-right">
-              안녕하세요,{" "}
+              안녕하세요,{' '}
               <Link
                 href="/mypage"
                 className="underline decoration-muted-foreground underline-offset-2 hover:text-muted-foreground"

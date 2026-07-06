@@ -1,9 +1,14 @@
-"use client"
+'use client'
 
-import { useCallback, useEffect, useState } from "react"
-import { CloudSun, Loader2, MapPin, RefreshCw } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { UserFacingError, UI_ERRORS, apiErrorOrFallback } from "@/lib/user-facing-error"
+import { useCallback, useEffect, useState } from 'react'
+import { CloudSun, Loader2, MapPin, RefreshCw } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import {
+  UserFacingError,
+  UI_ERRORS,
+  apiErrorOrFallback,
+} from '@/lib/user-facing-error'
+import { fetchWeather } from '@/lib/weather-api'
 
 type WeatherData = {
   temp: number
@@ -11,11 +16,11 @@ type WeatherData = {
 }
 
 type WeatherWidgetProps = {
-  variant?: "default" | "compact"
+  variant?: 'default' | 'compact'
 }
 
-export function WeatherWidget({ variant = "default" }: WeatherWidgetProps) {
-  const compact = variant === "compact"
+export function WeatherWidget({ variant = 'default' }: WeatherWidgetProps) {
+  const compact = variant === 'compact'
   const [weather, setWeather] = useState<WeatherData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -24,9 +29,8 @@ export function WeatherWidget({ variant = "default" }: WeatherWidgetProps) {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch("/api/weather")
-      const data = (await res.json()) as WeatherData & { error?: string }
-      if (!res.ok) {
+      const data = await fetchWeather()
+      if (!data.ok || data.temp === undefined || !data.description) {
         throw new UserFacingError(
           apiErrorOrFallback(data.error, UI_ERRORS.weatherFailed)
         )
@@ -43,33 +47,37 @@ export function WeatherWidget({ variant = "default" }: WeatherWidgetProps) {
   }, [])
 
   useEffect(() => {
-    void load()
+    queueMicrotask(() => {
+      void load()
+    })
   }, [load])
 
   return (
     <div
       className={cn(
-        "group transition-colors",
+        'group transition-colors',
         compact
-          ? "inline-flex h-9 max-w-[11rem] items-center rounded-lg border border-zinc-300 bg-white px-2 text-zinc-900 shadow-sm sm:max-w-none sm:px-2.5"
-          : "block w-full max-w-md rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm"
+          ? 'inline-flex h-9 max-w-[11rem] items-center rounded-lg border border-zinc-300 bg-white px-2 text-zinc-900 shadow-sm sm:max-w-none sm:px-2.5'
+          : 'block w-full max-w-md rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm'
       )}
     >
       {loading && (
         <span
           className={cn(
-            "flex items-center",
+            'flex items-center',
             compact
-              ? "justify-center gap-1.5 px-1 text-xs text-zinc-500"
-              : "justify-center gap-2 py-3 text-sm text-zinc-500"
+              ? 'justify-center gap-1.5 px-1 text-xs text-zinc-500'
+              : 'justify-center gap-2 py-3 text-sm text-zinc-500'
           )}
         >
           <Loader2
-            className={cn("animate-spin", compact ? "h-3.5 w-3.5" : "h-4 w-4")}
+            className={cn('animate-spin', compact ? 'h-3.5 w-3.5' : 'h-4 w-4')}
             aria-hidden="true"
           />
-          <span className={compact ? "sr-only sm:not-sr-only sm:inline" : undefined}>
-            {compact ? "로딩" : "날씨 불러오는 중…"}
+          <span
+            className={compact ? 'sr-only sm:not-sr-only sm:inline' : undefined}
+          >
+            {compact ? '로딩' : '날씨 불러오는 중…'}
           </span>
         </span>
       )}
@@ -77,21 +85,23 @@ export function WeatherWidget({ variant = "default" }: WeatherWidgetProps) {
       {!loading && error && (
         <span
           className={cn(
-            "flex items-center",
+            'flex items-center',
             compact
-              ? "gap-1.5 px-1 text-xs text-zinc-400"
-              : "flex-col gap-2 py-2 text-center text-zinc-500"
+              ? 'gap-1.5 px-1 text-xs text-zinc-400'
+              : 'flex-col gap-2 py-2 text-center text-zinc-500'
           )}
         >
           <CloudSun
             className={cn(
-              "shrink-0 text-zinc-400",
-              compact ? "h-3.5 w-3.5" : "h-6 w-6"
+              'shrink-0 text-zinc-400',
+              compact ? 'h-3.5 w-3.5' : 'h-6 w-6'
             )}
             aria-hidden="true"
           />
-          <span className={compact ? "hidden text-[11px] sm:inline" : "text-sm"}>
-            {compact ? "Weather Cloud" : error}
+          <span
+            className={compact ? 'hidden text-[11px] sm:inline' : 'text-sm'}
+          >
+            {compact ? 'Weather Cloud' : error}
           </span>
           <button
             type="button"
@@ -101,15 +111,16 @@ export function WeatherWidget({ variant = "default" }: WeatherWidgetProps) {
               void load()
             }}
             className={cn(
-              "shrink-0 rounded p-0.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600",
-              !compact && "text-xs text-zinc-500 underline-offset-2 hover:underline"
+              'shrink-0 rounded p-0.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600',
+              !compact &&
+                'text-xs text-zinc-500 underline-offset-2 hover:underline'
             )}
             aria-label="다시 시도"
           >
             {compact ? (
               <RefreshCw className="h-3 w-3" aria-hidden="true" />
             ) : (
-              "다시 시도"
+              '다시 시도'
             )}
           </button>
         </span>
@@ -117,11 +128,17 @@ export function WeatherWidget({ variant = "default" }: WeatherWidgetProps) {
 
       {!loading && weather && compact && (
         <span className="flex min-w-0 items-center gap-1 sm:gap-1.5">
-          <MapPin className="hidden h-3 w-3 shrink-0 text-zinc-500 sm:block" aria-hidden="true" />
+          <MapPin
+            className="hidden h-3 w-3 shrink-0 text-zinc-500 sm:block"
+            aria-hidden="true"
+          />
           <span className="hidden shrink-0 text-[11px] font-medium text-zinc-600 sm:inline">
             Seoul
           </span>
-          <CloudSun className="h-3.5 w-3.5 shrink-0 text-amber-500" aria-hidden="true" />
+          <CloudSun
+            className="h-3.5 w-3.5 shrink-0 text-amber-500"
+            aria-hidden="true"
+          />
           <span className="shrink-0 text-sm font-semibold tabular-nums text-zinc-950">
             {weather.temp}°
           </span>
@@ -136,7 +153,7 @@ export function WeatherWidget({ variant = "default" }: WeatherWidgetProps) {
               void load()
             }}
             className="ml-0.5 shrink-0 rounded p-0.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
-            aria-label={"날씨 새로고침"}
+            aria-label={'날씨 새로고침'}
           >
             <RefreshCw className="h-3 w-3" aria-hidden="true" />
           </button>
@@ -158,7 +175,7 @@ export function WeatherWidget({ variant = "default" }: WeatherWidgetProps) {
                 void load()
               }}
               className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
-              aria-label={"날씨 새로고침"}
+              aria-label={'날씨 새로고침'}
             >
               <RefreshCw className="h-4 w-4" aria-hidden="true" />
             </button>

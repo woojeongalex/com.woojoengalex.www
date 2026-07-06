@@ -1,12 +1,15 @@
-import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 
 type PageBackButtonProps = {
   href?: string
   label?: string
 }
 
-export function PageBackButton({ href = "/", label = "뒤로가기" }: PageBackButtonProps) {
+export function PageBackButton({
+  href = '/',
+  label = '뒤로가기',
+}: PageBackButtonProps) {
   return (
     <Link
       href={href}

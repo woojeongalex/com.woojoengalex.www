@@ -1,9 +1,9 @@
-import { postMusicJson } from "@/lib/music-api-fetch"
+import { postMusicJson } from '@/lib/music-api-fetch'
 
 export type SingEvaluationPayload = {
   catalogSongId?: string | null
   mrSearchListId?: number | null
-  inputSource: "mic" | "video"
+  inputSource: 'mic' | 'video'
   pitchScore: number
   rhythmScore: number
   vocalGrade: string
@@ -20,7 +20,7 @@ export type SingEvaluationApiResponse = {
 
 export function postSingEvaluation(payload: SingEvaluationPayload) {
   return postMusicJson<SingEvaluationPayload, SingEvaluationApiResponse>(
-    "/api/music/sing-evaluation",
+    '/api/music/sing-evaluation',
     payload
   )
 }

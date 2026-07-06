@@ -48,13 +48,13 @@ React 폼·상태 규칙은 `REACT_RULES.md` 참조.
 
 ## 5. 프론트엔드 전역 원칙 (Non-Negotiable)
 
-| 원칙 | 내용 |
-|------|------|
-| Server Component 기본 | `"use client"` 는 클라이언트 상태·이벤트가 필요할 때만 |
-| API 추상화 | 컴포넌트에서 `fetch` 직접 호출 금지 — `lib/` 경유 |
-| 폼 상태 | 필드별 `useState` 금지 — FormData 또는 React Hook Form |
-| 에러 표시 | API 원문 노출 금지 — `lib/user-facing-error.ts` 필터 경유 |
-| 타입 안전 | Props `interface` 명시, `any` 금지 |
+| 원칙                  | 내용                                                      |
+| --------------------- | --------------------------------------------------------- |
+| Server Component 기본 | `"use client"` 는 클라이언트 상태·이벤트가 필요할 때만    |
+| API 추상화            | 컴포넌트에서 `fetch` 직접 호출 금지 — `lib/` 경유         |
+| 폼 상태               | 필드별 `useState` 금지 — FormData 또는 React Hook Form    |
+| 에러 표시             | API 원문 노출 금지 — `lib/user-facing-error.ts` 필터 경유 |
+| 타입 안전             | Props `interface` 명시, `any` 금지                        |
 
 ---
 
@@ -67,4 +67,4 @@ React 폼·상태 규칙은 `REACT_RULES.md` 참조.
 
 ---
 
-*세부 구현 규칙은 `alexview/CLAUDE.md` 와 `REACT_RULES.md` 를 참조한다.*
+_세부 구현 규칙은 `alexview/CLAUDE.md` 와 `REACT_RULES.md` 를 참조한다._

@@ -1,9 +1,6 @@
 /** 브라우저 → Next /api/auth 호출 */
 
-import {
-  UserFacingError,
-  apiErrorOrFallback,
-} from "@/lib/user-facing-error"
+import { UserFacingError, apiErrorOrFallback } from '@/lib/user-facing-error'
 
 async function parseJsonResponse<T>(
   res: Response,
@@ -30,8 +27,8 @@ export async function postAuthJson<T>(
   fallbackError: string
 ): Promise<T> {
   const res = await fetch(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
   return parseJsonResponse<T>(res, fallbackError)
@@ -44,6 +41,9 @@ export async function getAvailability(
   fallbackError: string
 ): Promise<boolean> {
   const res = await fetch(`${path}?${param}=${encodeURIComponent(value)}`)
-  const data = await parseJsonResponse<{ available?: boolean }>(res, fallbackError)
+  const data = await parseJsonResponse<{ available?: boolean }>(
+    res,
+    fallbackError
+  )
   return Boolean(data.available)
 }

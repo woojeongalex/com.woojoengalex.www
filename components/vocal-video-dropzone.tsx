@@ -1,11 +1,11 @@
-"use client"
+'use client'
 
-import type { VocalAnalysisResult } from "@/lib/analyze-media"
+import type { VocalAnalysisResult } from '@/lib/analyze-media'
 import {
   MediaAnalysisDropzone,
   type MediaDropzoneCopy,
   VOCAL_DROPZONE_COPY,
-} from "@/components/media-analysis-dropzone"
+} from '@/components/media-analysis-dropzone'
 
 type VocalVideoDropzoneProps = {
   copy?: MediaDropzoneCopy

@@ -1,15 +1,15 @@
-import { readFileSync } from "fs"
-import { join } from "path"
-import { NextResponse } from "next/server"
-import { UI_ERRORS } from "@/lib/user-facing-error"
+import { readFileSync } from 'fs'
+import { join } from 'path'
+import { NextResponse } from 'next/server'
+import { UI_ERRORS } from '@/lib/user-facing-error'
 import {
   WEATHER_API_BASE,
   weatherCatchResponse,
   weatherDetailError,
   weatherProxyFailure,
-} from "@/app/api/weather/_lib"
+} from '@/app/api/weather/_lib'
 
-export const runtime = "nodejs"
+export const runtime = 'nodejs'
 
 const BACKEND_FETCH_MS = 1500
 
@@ -18,36 +18,36 @@ function readOpenWeatherKey(): string | null {
     return process.env.OPENWEATHER_API_KEY.trim()
   }
   try {
-    const envPath = join(process.cwd(), "..", "woojeongai", ".env")
-    const content = readFileSync(envPath, "utf8")
+    const envPath = join(process.cwd(), '..', 'woojeongai', '.env')
+    const content = readFileSync(envPath, 'utf8')
     const match = content.match(/^OPENWEATHER_API_KEY=(.+)$/m)
-    return match?.[1]?.trim() || null
+    return match?.[1]?.trim() ?? null
   } catch {
     return null
   }
 }
 
 async function fetchOpenWeatherDirect(apiKey: string) {
-  const url = new URL("https://api.openweathermap.org/data/2.5/weather")
-  url.searchParams.set("q", "Seoul")
-  url.searchParams.set("appid", apiKey)
-  url.searchParams.set("units", "metric")
-  url.searchParams.set("lang", "kr")
+  const url = new URL('https://api.openweathermap.org/data/2.5/weather')
+  url.searchParams.set('q', 'Seoul')
+  url.searchParams.set('appid', apiKey)
+  url.searchParams.set('units', 'metric')
+  url.searchParams.set('lang', 'kr')
 
-  const res = await fetch(url.toString(), { cache: "no-store" })
+  const res = await fetch(url.toString(), { cache: 'no-store' })
   const data = (await res.json()) as {
     main?: { temp?: number }
     weather?: { description?: string }[]
   }
 
   if (!res.ok) {
-    throw new Error("openweather_failed")
+    throw new Error('openweather_failed')
   }
 
   const temp = data.main?.temp
   const description = data.weather?.[0]?.description
   if (temp === undefined || !description) {
-    throw new Error("openweather_invalid")
+    throw new Error('openweather_invalid')
   }
 
   return { temp: Math.round(temp), description }
@@ -59,7 +59,7 @@ async function fetchFromBackend() {
 
   try {
     const res = await fetch(`${WEATHER_API_BASE}/api/weather`, {
-      cache: "no-store",
+      cache: 'no-store',
       signal: controller.signal,
     })
     const data = (await res.json()) as {
@@ -73,7 +73,7 @@ async function fetchFromBackend() {
     }
 
     if (data.temp === undefined || !data.description) {
-      throw new Error("backend_invalid")
+      throw new Error('backend_invalid')
     }
 
     return { temp: data.temp, description: data.description }
@@ -92,10 +92,10 @@ export async function GET() {
       fetchOpenWeatherDirect(apiKey),
     ])
 
-    if (backendResult.status === "fulfilled") {
+    if (backendResult.status === 'fulfilled') {
       return NextResponse.json(backendResult.value)
     }
-    if (owmResult.status === "fulfilled") {
+    if (owmResult.status === 'fulfilled') {
       return NextResponse.json(owmResult.value)
     }
     return weatherProxyFailure(UI_ERRORS.weatherFailed, 502)

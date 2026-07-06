@@ -1,4 +1,4 @@
-import { getMusicJson, postMusicJson } from "@/lib/music-api-fetch"
+import { getMusicJson, postMusicJson } from '@/lib/music-api-fetch'
 
 export type SpeechTopicHit = {
   topic_id: string
@@ -12,7 +12,9 @@ export type SpeechTopicsPayload = {
 }
 
 export async function fetchSpeechTopics(): Promise<SpeechTopicsPayload> {
-  const data = await getMusicJson<SpeechTopicsPayload>("/api/music/speech-topics")
+  const data = await getMusicJson<SpeechTopicsPayload>(
+    '/api/music/speech-topics'
+  )
   return { hits: data.hits ?? [], count: data.count ?? 0 }
 }
 
@@ -35,7 +37,7 @@ export type SpeechEvaluationResponse = {
 
 export function postSpeechEvaluation(payload: SpeechEvaluationPayload) {
   return postMusicJson<SpeechEvaluationPayload, SpeechEvaluationResponse>(
-    "/api/music/speech-evaluation",
+    '/api/music/speech-evaluation',
     payload
   )
 }

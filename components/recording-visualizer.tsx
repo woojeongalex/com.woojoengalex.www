@@ -1,6 +1,6 @@
-"use client"
+'use client'
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from 'react'
 
 interface RecordingVisualizerProps {
   active: boolean
@@ -10,7 +10,7 @@ interface RecordingVisualizerProps {
 
 export function RecordingVisualizer({
   active,
-  accent = "#00FF88",
+  accent = 'var(--primary)',
   barCount = 28,
 }: RecordingVisualizerProps) {
   const [heights, setHeights] = useState<number[]>(() =>
@@ -19,12 +19,11 @@ export function RecordingVisualizer({
   const rafRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    if (!active) {
-      setHeights(Array.from({ length: barCount }, () => 8))
-      return
-    }
+    if (!active) return
     const tick = () => {
-      setHeights(Array.from({ length: barCount }, () => 12 + Math.random() * 88))
+      setHeights(
+        Array.from({ length: barCount }, () => 12 + Math.random() * 88)
+      )
       rafRef.current = setTimeout(tick, 80)
     }
     tick()
@@ -33,22 +32,26 @@ export function RecordingVisualizer({
     }
   }, [active, barCount])
 
+  const displayHeights = active
+    ? heights
+    : Array.from({ length: barCount }, () => 8)
+
   return (
     <div
-      className="flex items-end gap-0.5 w-full rounded-xl px-2"
-      style={{ height: 52, background: active ? "rgba(0,255,136,0.05)" : "transparent" }}
+      className={`flex items-end gap-0.5 w-full rounded-xl px-2 ${active ? 'bg-primary/5' : 'bg-transparent'}`}
+      style={{ height: 52 }}
       aria-hidden="true"
     >
-      {heights.map((h, i) => (
+      {displayHeights.map((h, i) => (
         <div
           key={i}
-          className="flex-1 rounded-full"
+          className={`flex-1 rounded-full ${active ? '' : 'bg-muted-foreground'}`}
           style={{
             height: `${h}%`,
             minHeight: 3,
-            background: active ? accent : "#374151",
+            background: active ? accent : undefined,
             opacity: active ? 0.75 + (h / 100) * 0.25 : 0.2,
-            transition: active ? "height 70ms ease-out" : "none",
+            transition: active ? 'height 70ms ease-out' : 'none',
           }}
         />
       ))}

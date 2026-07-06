@@ -8,10 +8,10 @@
 
 ## 0. 문서 읽는 순서 (프론트엔드)
 
-| 순서 | 문서 | 역할 |
-|------|------|------|
-| 1 | `../CLAUDE.md` | 전역 원칙·행동 하네스 |
-| 2 | **본 파일** `alexview/CLAUDE.md` | 프론트엔드 인수인계 정본 |
+| 순서 | 문서                             | 역할                     |
+| ---- | -------------------------------- | ------------------------ |
+| 1    | `../CLAUDE.md`                   | 전역 원칙·행동 하네스    |
+| 2    | **본 파일** `alexview/CLAUDE.md` | 프론트엔드 인수인계 정본 |
 
 ---
 
@@ -45,20 +45,20 @@
 
 ## 2. 기술 스택
 
-| 항목 | 버전 |
-|------|------|
-| Next.js (App Router) | 16.2.4 |
-| React / React DOM | 19 |
-| TypeScript | 5.7.3 |
-| Tailwind CSS | 4.2.0 |
-| Radix UI | 20+ primitives |
-| React Hook Form | 7.54.1 |
-| Zod | (hookform/resolvers) |
-| recharts | 2.15.0 |
-| sonner (toast) | 1.7.1 |
-| next-themes (dark mode) | 0.4.6 |
-| @google/generative-ai | 0.24.1 |
-| pnpm | 9.15.9 |
+| 항목                    | 버전                 |
+| ----------------------- | -------------------- |
+| Next.js (App Router)    | 16.2.4               |
+| React / React DOM       | 19                   |
+| TypeScript              | 5.7.3                |
+| Tailwind CSS            | 4.2.0                |
+| Radix UI                | 20+ primitives       |
+| React Hook Form         | 7.54.1               |
+| Zod                     | (hookform/resolvers) |
+| recharts                | 2.15.0               |
+| sonner (toast)          | 1.7.1                |
+| next-themes (dark mode) | 0.4.6                |
+| @google/generative-ai   | 0.24.1               |
+| pnpm                    | 9.15.9               |
 
 ---
 
@@ -110,13 +110,13 @@ alexview/
 
 ## 4. 전역 원칙 (Non-Negotiable)
 
-| 원칙 | 내용 |
-|------|------|
-| Server Component 기본 | `"use client"` 는 클라이언트 상태·이벤트가 필요할 때만 |
-| API 추상화 | 컴포넌트에서 `fetch` 직접 호출 금지 — `lib/` 경유 |
-| 폼 상태 | 필드별 `useState` 금지 — FormData 또는 React Hook Form |
-| 에러 표시 | API 원문 노출 금지 — `lib/user-facing-error.ts` 필터 경유 |
-| 타입 안전 | Props `interface` 명시, `any` 금지 |
+| 원칙                  | 내용                                                      |
+| --------------------- | --------------------------------------------------------- |
+| Server Component 기본 | `"use client"` 는 클라이언트 상태·이벤트가 필요할 때만    |
+| API 추상화            | 컴포넌트에서 `fetch` 직접 호출 금지 — `lib/` 경유         |
+| 폼 상태               | 필드별 `useState` 금지 — FormData 또는 React Hook Form    |
+| 에러 표시             | API 원문 노출 금지 — `lib/user-facing-error.ts` 필터 경유 |
+| 타입 안전             | Props `interface` 명시, `any` 금지                        |
 
 ---
 
@@ -145,8 +145,8 @@ alexview/
 
 ```tsx
 // ❌ 필드마다 useState 남발
-const [id, setId] = useState("")
-const [pw, setPw] = useState("")
+const [id, setId] = useState('')
+const [pw, setPw] = useState('')
 
 // ✅ FormData + Object.fromEntries (단순 폼)
 async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -175,7 +175,7 @@ const { register, handleSubmit, formState } = useForm<LoginForm>({
 const { loading, error, run } = useAsyncAction(loginApi)
 
 // 중복 체크 훅
-const { available, checking, check } = useAvailabilityCheck("id")
+const { available, checking, check } = useAvailabilityCheck('id')
 ```
 
 ### 7.4 에러 표시 규칙
@@ -235,9 +235,7 @@ export default function StaticPage() { ... }
 
 ---
 
-*세부 규칙 추가 시 본 파일을 업데이트한다.*
-
-
+_세부 규칙 추가 시 본 파일을 업데이트한다._
 
 ## 11. 다크 모드
 

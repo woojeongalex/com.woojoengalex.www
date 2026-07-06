@@ -5,10 +5,10 @@ export type UserSession = {
   nickname?: string | null
 }
 
-const STORAGE_KEY = "iuem_user"
+const STORAGE_KEY = 'iuem_user'
 
 export function getUserSession(): UserSession | null {
-  if (typeof window === "undefined") return null
+  if (typeof window === 'undefined') return null
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
@@ -22,15 +22,16 @@ export function getUserSession(): UserSession | null {
 
 export function setUserSession(user: UserSession): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(user))
-  window.dispatchEvent(new Event("auth-changed"))
+  window.dispatchEvent(new Event('auth-changed'))
 }
 
 export function clearUserSession(): void {
   localStorage.removeItem(STORAGE_KEY)
-  window.dispatchEvent(new Event("auth-changed"))
+  window.dispatchEvent(new Event('auth-changed'))
 }
 
 /** 인사말에 쓸 표시 이름 (닉네임 우선, 없으면 아이디) */
 export function getUserDisplayName(user: UserSession): string {
-  return user.nickname?.trim() || user.username.trim()
+  const nickname = user.nickname?.trim()
+  return nickname && nickname.length > 0 ? nickname : user.username.trim()
 }

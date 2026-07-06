@@ -2,16 +2,16 @@ import {
   UserFacingError,
   UI_ERRORS,
   apiErrorOrFallback,
-} from "@/lib/user-facing-error"
+} from '@/lib/user-facing-error'
 
 export async function getMusicJson<T>(path: string): Promise<T> {
-  const res = await fetch(path, { cache: "no-store" })
+  const res = await fetch(path, { cache: 'no-store' })
   const data = (await res.json()) as T & { error?: string; detail?: string }
   if (!res.ok) {
     const msg =
-      typeof data.detail === "string"
+      typeof data.detail === 'string'
         ? data.detail
-        : typeof data.error === "string"
+        : typeof data.error === 'string'
           ? data.error
           : undefined
     throw new UserFacingError(apiErrorOrFallback(msg, UI_ERRORS.requestFailed))
@@ -24,17 +24,20 @@ export async function postMusicJson<TBody, TResponse>(
   body: TBody
 ): Promise<TResponse> {
   const res = await fetch(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-    cache: "no-store",
+    cache: 'no-store',
   })
-  const data = (await res.json()) as TResponse & { error?: string; detail?: string }
+  const data = (await res.json()) as TResponse & {
+    error?: string
+    detail?: string
+  }
   if (!res.ok) {
     const msg =
-      typeof data.detail === "string"
+      typeof data.detail === 'string'
         ? data.detail
-        : typeof data.error === "string"
+        : typeof data.error === 'string'
           ? data.error
           : undefined
     throw new UserFacingError(apiErrorOrFallback(msg, UI_ERRORS.requestFailed))

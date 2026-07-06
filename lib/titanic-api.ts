@@ -23,10 +23,10 @@ export type WalterPassengerPage = {
   rows: WalterPassenger[]
 }
 
-const UPLOADED_FILE_KEY = "titanic_uploaded_file_name"
+const UPLOADED_FILE_KEY = 'titanic_uploaded_file_name'
 
 export function getUploadedFileName(): string | null {
-  if (typeof window === "undefined") return null
+  if (typeof window === 'undefined') return null
   return sessionStorage.getItem(UPLOADED_FILE_KEY)
 }
 
@@ -34,15 +34,22 @@ export function setUploadedFileName(fileName: string): void {
   sessionStorage.setItem(UPLOADED_FILE_KEY, fileName)
 }
 
-export async function uploadTitanicCsv(file: File): Promise<{ file_name: string; count: number }> {
+export async function uploadTitanicCsv(
+  file: File
+): Promise<{ file_name: string; count: number }> {
   const formData = new FormData()
-  formData.append("file", file)
+  formData.append('file', file)
 
   let response: Response
   try {
-    response = await fetch("/api/titanic/james/upload", { method: "POST", body: formData })
+    response = await fetch('/api/titanic/james/upload', {
+      method: 'POST',
+      body: formData,
+    })
   } catch {
-    throw new Error("백엔드 서버에 연결하지 못했습니다. 백엔드(8000)가 실행 중인지 확인해 주세요.")
+    throw new Error(
+      '백엔드 서버에 연결하지 못했습니다. 백엔드(8000)가 실행 중인지 확인해 주세요.'
+    )
   }
 
   const raw = await response.text()
@@ -50,25 +57,44 @@ export async function uploadTitanicCsv(file: File): Promise<{ file_name: string;
   try {
     data = raw ? (JSON.parse(raw) as typeof data) : {}
   } catch {
-    throw new Error("업로드 응답 형식이 올바르지 않습니다.")
+    throw new Error('업로드 응답 형식이 올바르지 않습니다.')
   }
 
   if (!response.ok) {
     const detail = data.detail
-    if (typeof detail === "string") {
+    if (typeof detail === 'string') {
       throw new Error(detail)
     }
     if (Array.isArray(detail)) {
       const first = detail[0] as { msg?: string; loc?: unknown[] } | undefined
-      throw new Error(first?.msg ?? "CSV 형식이 올바르지 않습니다.")
+      throw new Error(first?.msg ?? 'CSV 형식이 올바르지 않습니다.')
     }
-    throw new Error("업로드에 실패했습니다.")
+    throw new Error('업로드에 실패했습니다.')
   }
 
   return {
     file_name: String(data.file_name ?? file.name),
     count: Number(data.count ?? 0),
   }
+}
+
+export interface SmithChatResponse {
+  message?: string
+  accuracy?: number | null
+  type?: string
+  detail?: string
+  error?: string
+}
+
+export async function sendSmithChatMessage(
+  text: string
+): Promise<SmithChatResponse> {
+  const res = await fetch('http://127.0.0.1:8000/titanic/smith/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: text }),
+  })
+  return (await res.json()) as SmithChatResponse
 }
 
 export async function fetchWalterPassengers(options: {
@@ -81,27 +107,35 @@ export async function fetchWalterPassengers(options: {
     size: String(options.size),
   })
   if (options.sourceFile) {
-    params.set("source_file", options.sourceFile)
+    params.set('source_file', options.sourceFile)
   }
 
   let response: Response
   try {
-    response = await fetch(`/api/titanic/walter/passengers?${params.toString()}`)
+    response = await fetch(
+      `/api/titanic/walter/passengers?${params.toString()}`
+    )
   } catch {
-    throw new Error("백엔드 서버에 연결하지 못했습니다. 백엔드(8000)가 실행 중인지 확인해 주세요.")
+    throw new Error(
+      '백엔드 서버에 연결하지 못했습니다. 백엔드(8000)가 실행 중인지 확인해 주세요.'
+    )
   }
 
   const raw = await response.text()
   let payload: Partial<WalterPassengerPage> & { detail?: string }
   try {
-    payload = raw ? (JSON.parse(raw) as Partial<WalterPassengerPage> & { detail?: string }) : {}
+    payload = raw
+      ? (JSON.parse(raw) as Partial<WalterPassengerPage> & { detail?: string })
+      : {}
   } catch {
-    throw new Error("상세 데이터 응답 형식이 올바르지 않습니다.")
+    throw new Error('상세 데이터 응답 형식이 올바르지 않습니다.')
   }
 
   if (!response.ok) {
     throw new Error(
-      typeof payload.detail === "string" ? payload.detail : "상세 데이터를 불러오지 못했습니다.",
+      typeof payload.detail === 'string'
+        ? payload.detail
+        : '상세 데이터를 불러오지 못했습니다.'
     )
   }
 
@@ -111,6 +145,6 @@ export async function fetchWalterPassengers(options: {
     size: Number(payload.size ?? options.size),
     total: Number(payload.total ?? 0),
     total_pages: Number(payload.total_pages ?? 0),
-    rows: Array.isArray(payload.rows) ? (payload.rows as WalterPassenger[]) : [],
+    rows: Array.isArray(payload.rows) ? payload.rows : [],
   }
 }

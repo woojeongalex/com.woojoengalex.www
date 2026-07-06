@@ -22,9 +22,9 @@ export type SignupFormFields = {
 }
 
 export const EMPTY_SIGNUP: SignupFormFields = {
-  username: "",
-  nickname: "",
-  password: "",
-  passwordConfirm: "",
-  email: "",
+  username: '',
+  nickname: '',
+  password: '',
+  passwordConfirm: '',
+  email: '',
 }

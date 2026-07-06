@@ -1,7 +1,7 @@
-"use client"
+'use client'
 
-import { useCallback, useEffect, useState } from "react"
-import type { LucideIcon } from "lucide-react"
+import { useCallback, useEffect, useState } from 'react'
+import type { LucideIcon } from 'lucide-react'
 import {
   AudioLines,
   BarChart3,
@@ -22,12 +22,12 @@ import {
   Search,
   Sparkles,
   Wrench,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 const SLIDE_MS = 10_000
 
-type GuideSlideId = "vocal" | "instrument" | "speech"
+type GuideSlideId = 'vocal' | 'instrument' | 'speech'
 
 type GuideStep = {
   step: string
@@ -47,42 +47,42 @@ type GuideSlide = {
 
 const GUIDE_SLIDES: GuideSlide[] = [
   {
-    id: "vocal",
-    badge: "보컬 분석",
-    title: "가요·뮤지컬 보컬 분석",
-    intro: "MR 선택 → 녹음·영상 → AI 피드백까지 4단계",
+    id: 'vocal',
+    badge: '보컬 분석',
+    title: '가요·뮤지컬 보컬 분석',
+    intro: 'MR 선택 → 녹음·영상 → AI 피드백까지 4단계',
     icon: AudioLines,
     steps: [
-      { step: "1", title: "분석 화면", icon: Home },
-      { step: "2", title: "MR 선택", icon: Search },
-      { step: "3", title: "녹음·영상", icon: Mic, secondaryIcon: FileVideo },
-      { step: "4", title: "AI 결과", icon: Sparkles },
+      { step: '1', title: '분석 화면', icon: Home },
+      { step: '2', title: 'MR 선택', icon: Search },
+      { step: '3', title: '녹음·영상', icon: Mic, secondaryIcon: FileVideo },
+      { step: '4', title: 'AI 결과', icon: Sparkles },
     ],
   },
   {
-    id: "instrument",
-    badge: "악기 분석",
-    title: "기타 · 피아노",
-    intro: "악기 선택 → 연주 입력 → 튜닝·음정 확인",
+    id: 'instrument',
+    badge: '악기 분석',
+    title: '기타 · 피아노',
+    intro: '악기 선택 → 연주 입력 → 튜닝·음정 확인',
     icon: Music4,
     steps: [
-      { step: "1", title: "악기 화면", icon: Music2 },
-      { step: "2", title: "기타·피아노", icon: Guitar, secondaryIcon: Piano },
-      { step: "3", title: "튜닝 측정", icon: Wrench },
-      { step: "4", title: "연습 가이드", icon: BarChart3 },
+      { step: '1', title: '악기 화면', icon: Music2 },
+      { step: '2', title: '기타·피아노', icon: Guitar, secondaryIcon: Piano },
+      { step: '3', title: '튜닝 측정', icon: Wrench },
+      { step: '4', title: '연습 가이드', icon: BarChart3 },
     ],
   },
   {
-    id: "speech",
-    badge: "스피치",
-    title: "발표·대화 스피치 코칭",
-    intro: "고민 선택 → 마이크 녹음 → AI 말하기 피드백",
+    id: 'speech',
+    badge: '스피치',
+    title: '발표·대화 스피치 코칭',
+    intro: '고민 선택 → 마이크 녹음 → AI 말하기 피드백',
     icon: Mic2,
     steps: [
-      { step: "1", title: "MENU·스피치", icon: Radio },
-      { step: "2", title: "고민 선택", icon: Brain },
-      { step: "3", title: "마이크 녹음", icon: Mic },
-      { step: "4", title: "AI 코칭", icon: ListChecks },
+      { step: '1', title: 'MENU·스피치', icon: Radio },
+      { step: '2', title: '고민 선택', icon: Brain },
+      { step: '3', title: '마이크 녹음', icon: Mic },
+      { step: '4', title: 'AI 코칭', icon: ListChecks },
     ],
   },
 ]
@@ -104,36 +104,40 @@ function GuideStepCard({
     <li className="flex min-w-0 flex-1 items-center gap-1">
       <div
         className={cn(
-          "flex w-full flex-col items-center rounded-2xl border px-2 py-4 sm:px-3 sm:py-5",
-          slideId === "instrument"
+          'flex w-full flex-col items-center rounded-2xl border px-2 py-4 sm:px-3 sm:py-5',
+          slideId === 'instrument'
             ? isWhiteKey
-              ? "border-zinc-600 bg-zinc-900 text-white"
-              : "border-zinc-300 bg-white text-zinc-950"
+              ? 'border-zinc-600 bg-zinc-900 text-white'
+              : 'border-zinc-300 bg-white text-zinc-950'
             : isWhiteKey
-              ? "border-zinc-300 bg-white text-zinc-950"
-              : "border-zinc-600 bg-zinc-900 text-white"
+              ? 'border-zinc-300 bg-white text-zinc-950'
+              : 'border-zinc-600 bg-zinc-900 text-white'
         )}
       >
         <div
           className={cn(
-            "flex h-12 w-12 items-center justify-center rounded-xl border sm:h-14 sm:w-14",
-            isWhiteKey ? "border-zinc-200 bg-zinc-50" : "border-zinc-500 bg-zinc-800"
+            'flex h-12 w-12 items-center justify-center rounded-xl border sm:h-14 sm:w-14',
+            isWhiteKey
+              ? 'border-zinc-200 bg-zinc-50'
+              : 'border-zinc-500 bg-zinc-800'
           )}
           aria-hidden
         >
           <div className="flex items-center gap-1">
             <StepIcon
               className={cn(
-                SecondaryIcon ? "h-5 w-5 sm:h-6 sm:w-6" : "h-6 w-6 sm:h-7 sm:w-7",
-                isWhiteKey ? "text-zinc-900" : "text-white"
+                SecondaryIcon
+                  ? 'h-5 w-5 sm:h-6 sm:w-6'
+                  : 'h-6 w-6 sm:h-7 sm:w-7',
+                isWhiteKey ? 'text-zinc-900' : 'text-white'
               )}
               strokeWidth={1.75}
             />
             {SecondaryIcon ? (
               <SecondaryIcon
                 className={cn(
-                  "h-5 w-5 sm:h-6 sm:w-6",
-                  isWhiteKey ? "text-zinc-700" : "text-zinc-300"
+                  'h-5 w-5 sm:h-6 sm:w-6',
+                  isWhiteKey ? 'text-zinc-700' : 'text-zinc-300'
                 )}
                 strokeWidth={1.75}
               />
@@ -142,8 +146,8 @@ function GuideStepCard({
         </div>
         <span
           className={cn(
-            "mt-3 text-[10px] font-bold tracking-wider",
-            isWhiteKey ? "text-zinc-500" : "text-zinc-400"
+            'mt-3 text-[10px] font-bold tracking-wider',
+            isWhiteKey ? 'text-zinc-500' : 'text-zinc-400'
           )}
         >
           STEP {item.step}
@@ -163,7 +167,7 @@ function GuideStepCard({
 }
 
 function headerBadgeWhite(slideId: GuideSlideId): boolean {
-  return slideId === "vocal" || slideId === "speech"
+  return slideId === 'vocal' || slideId === 'speech'
 }
 
 export function IuemGuideCarousel() {
@@ -204,8 +208,8 @@ export function IuemGuideCarousel() {
               <span
                 key={s.id}
                 className={cn(
-                  "h-1.5 w-1.5 rounded-full transition-colors",
-                  i === index ? "bg-white" : "bg-zinc-600"
+                  'h-1.5 w-1.5 rounded-full transition-colors',
+                  i === index ? 'bg-white' : 'bg-zinc-600'
                 )}
               />
             ))}
@@ -238,10 +242,10 @@ export function IuemGuideCarousel() {
           <div className="min-w-0">
             <span
               className={cn(
-                "inline-block rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
+                'inline-block rounded-full border px-2.5 py-0.5 text-[11px] font-semibold',
                 accentWhite
-                  ? "border-zinc-300 bg-white text-zinc-900"
-                  : "border-zinc-600 bg-zinc-900 text-zinc-200"
+                  ? 'border-zinc-300 bg-white text-zinc-900'
+                  : 'border-zinc-600 bg-zinc-900 text-zinc-200'
               )}
             >
               {slide.badge}
@@ -249,12 +253,16 @@ export function IuemGuideCarousel() {
             <h2 className="mt-3 text-2xl font-semibold leading-tight sm:text-[1.65rem]">
               {slide.title}
             </h2>
-            <p className="mt-2 text-sm leading-6 text-zinc-400">{slide.intro}</p>
+            <p className="mt-2 text-sm leading-6 text-zinc-400">
+              {slide.intro}
+            </p>
           </div>
           <div
             className={cn(
-              "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border sm:h-14 sm:w-14",
-              accentWhite ? "border-white bg-white text-zinc-950" : "border-zinc-600 bg-zinc-800"
+              'flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border sm:h-14 sm:w-14',
+              accentWhite
+                ? 'border-white bg-white text-zinc-950'
+                : 'border-zinc-600 bg-zinc-800'
             )}
           >
             <Icon className="h-6 w-6 sm:h-7 sm:w-7" aria-hidden />
@@ -280,7 +288,7 @@ export function IuemGuideCarousel() {
             type="button"
             tabIndex={-1}
             onClick={() => goTo(i)}
-            aria-current={i === index ? "true" : undefined}
+            aria-current={i === index ? 'true' : undefined}
           >
             {s.badge}
           </button>
